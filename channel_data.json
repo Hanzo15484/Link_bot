@@ -1,0 +1,75 @@
+{
+  "channels": {
+    "-1002287495713": {
+      "name": "Dan Da Dan",
+      "file_id": "LTEwMDIyODc0OTU3MTNfcGVybWFuZW50",
+      "created_at": "2025-08-29T11:30:31.159089"
+    },
+    "-1002843513620": {
+      "name": "I Was Reincarnated as the 7th Prince so I Can Take My Time Perfecting My Magical Ability",
+      "file_id": "LTEwMDI4NDM1MTM2MjBfcGVybWFuZW50",
+      "created_at": "2025-08-29T11:44:31.380877"
+    },
+    "-1002180214598": {
+      "name": "Ongoing Anime Fable",
+      "file_id": "LTEwMDIxODAyMTQ1OThfcGVybWFuZW50",
+      "created_at": "2025-08-29T11:54:30.513460"
+    },
+    "-1002348228254": {
+      "name": "One Piece",
+      "file_id": "LTEwMDIzNDgyMjgyNTRfcGVybWFuZW50",
+      "created_at": "2025-08-30T14:47:55.562891"
+    },
+    "-1002874664492": {
+      "name": "Sakamoto Days",
+      "file_id": "LTEwMDI4NzQ2NjQ0OTJfcGVybWFuZW50",
+      "created_at": "2025-09-03T12:32:20.786343"
+    }
+  },
+  "links": {
+    "LTEwMDIyODc0OTU3MTNfcGVybWFuZW50": {
+      "channel_id": "-1002287495713",
+      "invite_link": "https://t.me/+YyFL1TIMpzI0NjA9",
+      "expiry_time": "2025-09-03T12:26:23.679165",
+      "is_active": true,
+      "created_at": "2025-09-03T12:21:24.136585"
+    },
+    "LTEwMDI4NDM1MTM2MjBfcGVybWFuZW50": {
+      "channel_id": "-1002843513620",
+      "invite_link": "https://t.me/+fbihIgF-NBZiMzg9",
+      "expiry_time": "2025-09-03T12:26:24.137590",
+      "is_active": true,
+      "created_at": "2025-09-03T12:21:24.588549"
+    },
+    "LTEwMDIxODAyMTQ1OThfcGVybWFuZW50": {
+      "channel_id": "-1002180214598",
+      "invite_link": "https://t.me/+ENa2XaId9E9lYmE9",
+      "expiry_time": "2025-09-03T13:04:22.901159",
+      "is_active": true,
+      "created_at": "2025-09-03T12:59:27.342827"
+    },
+    "LTEwMDIzNDgyMjgyNTRfcGVybWFuZW50": {
+      "channel_id": "-1002348228254",
+      "invite_link": "https://t.me/+T92fc4LRpao1ZTZl",
+      "expiry_time": "2025-09-03T12:26:25.002995",
+      "is_active": true,
+      "created_at": "2025-09-03T12:21:25.436214"
+    },
+    "LTEwMDI4NzQ2NjQ0OTJfcGVybWFuZW50": {
+      "channel_id": "-1002874664492",
+      "invite_link": "https://t.me/+Du-XXI54ZTYyNjE9",
+      "expiry_time": "2025-09-03T13:05:36.033528",
+      "is_active": true,
+      "created_at": "2025-09-03T13:00:37.368206"
+    }
+  },
+  "users": {
+    "6217166114": {
+      "authorized": true,
+      "expiry_date": "2025-09-04T12:24:50.571535",
+      "authorized_by": 5373577888,
+      "authorized_at": "2025-09-03T12:24:50.571535"
+    }
+  },
+  "admins": []
+}
