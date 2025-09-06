@@ -1094,7 +1094,7 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     for user_id in user_ids:
         try:
-            await context.bot.send_message(user_id, f"📢 Broadcast:\n\n{message_text}")
+            await context.bot.send_message(user_id, f"{message_text}")
             success_count += 1
         except Exception as e:
             logger.error(f"Failed to send broadcast to {user_id}: {e}")
