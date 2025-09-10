@@ -478,8 +478,8 @@ async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     # Create inline keyboard with About button
     keyboard = [
-        [InlineKeyboardButton("ᴀʙᴏᴜᴛ", callback_data="about")],
-        [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+        [InlineKeyboardButton("ᴀʙᴏᴜᴛ", callback_data="about",
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
