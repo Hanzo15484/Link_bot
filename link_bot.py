@@ -27,7 +27,7 @@ BOT_TOKEN = "7965411711:AAHcFqZYLiNE6bvmBE2iQB_CYBWxME4PuKs"
 OWNER_ID = 5373577888
 ADMIN_IDS = [5373577888, 6170814776, 6959143950]
 LINK_DURATION = 5 * 60  # 5 minutes in seconds
-MESSAGE_CLEANUP_TIME = 2 * 60 # minutes in seconds
+MESSAGE_CLEANUP_TIME = 3 * 60 # minutes in seconds
 
 # JSON storage file
 JSON_STORAGE = "channel_data.json"
