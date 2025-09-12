@@ -1,5 +1,5 @@
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler, ContextTypes,
     ConversationHandler, MessageHandler, filters
@@ -14,6 +14,9 @@ import traceback
 import json
 import os
 import sys
+import subprocess
+import requests
+from io import BytesIO
 
 # Enable logging
 logging.basicConfig(
@@ -27,15 +30,29 @@ BOT_TOKEN = "7965411711:AAHcFqZYLiNE6bvmBE2iQB_CYBWxME4PuKs"
 OWNER_ID = 5373577888
 ADMIN_IDS = [5373577888, 6170814776, 6959143950]
 LINK_DURATION = 5 * 60  # 5 minutes in seconds
-MESSAGE_CLEANUP_TIME = 3 * 60 # minutes in seconds
+MESSAGE_CLEANUP_TIME = 6 * 60  # 6 minutes in seconds
 
 # JSON storage file
 JSON_STORAGE = "channel_data.json"
+SETTINGS_STORAGE = "bot_settings.json"
 
 # Conversation states
-ABOUT, HELP_REQUIREMENTS, HELP_HOW, HELP_TROUBLESHOOT = range(4)
+(
+    ABOUT, HELP_REQUIREMENTS, HELP_HOW, HELP_TROUBLESHOOT,
+    SETTINGS_MAIN, SETTINGS_START, SETTINGS_START_TEXT, SETTINGS_START_IMAGE,
+    SETTINGS_START_BUTTONS, SETTINGS_START_ADD_BUTTON, SETTINGS_START_REMOVE_BUTTON,
+    SETTINGS_HELP, SETTINGS_HELP_TEXT, SETTINGS_HELP_IMAGE,
+    SETTINGS_HELP_BUTTONS, SETTINGS_HELP_ADD_BUTTON, SETTINGS_HELP_REMOVE_BUTTON
+) = range(16)
 
-# small capsp
+# Image paths (will be managed through settings)
+START_IMAGE = "photo_2025-08-31_23-17-37.jpg"
+HELP_IMAGE = "photo_2025-08-31_23-16-44.jpg"
+
+# Pagination
+LIST_CHANNELS_PAGE_SIZE = 10
+
+# small caps
 def to_small_caps(text: str) -> str:
     small_caps_map = {
         "a": "ᴀ", "b": "ʙ", "c": "ᴄ", "d": "ᴅ", "e": "ᴇ", "f": "ғ", "g": "ɢ",
@@ -68,13 +85,146 @@ def load_data():
             with open(JSON_STORAGE, 'r') as f:
                 return json.load(f)
         except:
-            return {"channels": {}, "links": {}, "users": {}}
-    return {"channels": {}, "links": {}, "users": {}}
+            return {"channels": {}, "links": {}, "users": {}, "admins": []}
+    return {"channels": {}, "links": {}, "users": {}, "admins": []}
 
 def save_data(data):
     """Save data to JSON file."""
     with open(JSON_STORAGE, 'w') as f:
         json.dump(data, f, indent=2)
+
+def load_settings():
+    """Load settings from JSON file."""
+    if os.path.exists(SETTINGS_STORAGE):
+        try:
+            with open(SETTINGS_STORAGE, 'r') as f:
+                return json.load(f)
+        except:
+            return {
+                "start": {
+                    "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
+• ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
+
+✦ ғᴇᴀᴛᴜʀᴇs:
+• ғᴀsᴛ ᴀɴᴅ ᴇᴀsʏ ʟɪɴᴋ ᴘʀᴏᴄᴇssɪɴɢ
+• ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
+• ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
+✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʏ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
+                    "image": "photo_2025-08-31_23-17-37.jpg",
+                    "buttons": [
+                        [{"text": "ᴀʙᴏᴜᴛ", "url": "callback:about"}],
+                        [{"text": "ᴄʟᴏsᴇ", "url": "callback:close"}]
+                    ]
+                },
+                "help": {
+                    "text": """✦ ʙᴏᴛ ʜᴇʟᴘ ɢᴜɪᴅᴇ
+
+┌─ ᴜsᴇʀ ᴄᴏᴍᴍᴀɴᴅs ─┐
+• /start – sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ᴀɴᴅ ᴠɪᴇᴡ ᴡᴇʟᴄᴏᴍᴇ ᴍᴇssᴀɢᴇ  
+• /help – sʜᴏᴡ ᴛʜɪs ʜᴇʟᴘ ɢᴜɪᴅᴇ   
+• /id – ɢᴇᴛ ʏᴏᴜʀ ɪᴅ
+• /settings - ᴄᴏɴꜰɪɢᴜʀᴇ ʙᴏᴛ ꜱᴇᴛᴛɪɴɢꜱ
+
+┌─ ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅs ─┐
+• /gen_link <channel_link/id> – ɢᴇɴᴇʀᴀᴛᴇ ᴀ ᴘᴇʀᴍᴀɴᴇɴᴛ ʙᴏᴛ ʟɪɴᴋ ᴡɪᴛʜ ᴀ 5-ᴍɪɴᴜᴛᴇ ᴛᴇᴍᴘᴏʀᴀʀʏ ɪɴᴠɪᴛᴇ  
+• /batch_link – ɢᴇɴᴇʀᴀᴛᴇ ʟɪɴᴋs ꜰᴏʀ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴡʜᴇʀᴇ ᴛʜᴇ ʙᴏᴛ ɪs ᴀɴ ᴀᴅᴍɪɴ 
+• /debug <channel_link/id> – ᴄʜᴇᴄᴋ ᴀɴᴅ ᴅᴇʙᴜɢ ᴄʜᴀɴɴᴇʟ ᴘᴇʀᴍɪssɪᴏɴs
+• /list_channels – ʟɪsᴛ ᴀʟʟ ᴀᴄᴛɪᴠᴇ ᴄʜᴀɴɴᴇʟs ᴄᴏɴɴᴇᴄᴛᴇᴅ ᴛᴏ ᴛʜᴇ ʙᴏᴛ  
+• /troubleshoot – ᴅɪᴀɢɴᴏsᴇ ᴀɴᴅ ꜰɪx ᴄᴏᴍᴍᴏɴ ɪssᴜᴇs ᴡɪᴛʜ ᴛʜᴇ ʙᴏᴛ  
+• /admins - ʟɪꜱᴛ ᴀʟʟ ʙᴏᴛ ᴀᴅᴍɪɴꜱ
+• /users - ꜱʜᴏᴡ ᴜꜱᴇʀ ꜱᴛᴀᴛꜱ
+
+┌─ ᴏᴡɴᴇʀ ᴄᴏᴍᴍᴀɴᴅs ─┐
+• /auth – ᴀᴜᴛʜᴏʀɪᴢᴇ ᴀ ᴜsᴇʀ ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ᴛᴏ ʟɪᴍɪᴛᴇᴅ ᴄᴏᴍᴍᴀɴᴅs  
+• /deauth – ʀᴇᴍᴏᴠᴇ ᴀᴜᴛʜᴏʀɪᴢᴀᴛɪᴏɴ ꜰʀᴏᴍ ᴀ ᴜsᴇʀ  
+• /promote – ᴘʀᴏᴍᴏᴛᴇ ᴀ ᴜsᴇʀ ᴛᴏ ᴀᴅᴍɪɴ ᴡɪᴛʜ ꜰᴜʟʟ ʙᴏᴛ ᴀᴄᴄᴇss (ᴇxᴄᴇᴘᴛ ᴏᴡɴᴇʀ-ᴏɴʟʏ ᴄᴏᴍᴍᴀɴᴅs)  
+• /demote – ʀᴇᴠᴏᴋᴇ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ꜰʀᴏᴍ ᴀ ᴜsᴇʀ  
+• /ban – ʙᴀɴ ᴀ ᴜsᴇʀ ꜰʀᴏᴍ ᴜsɪɴɢ ᴛʜᴇ ʙᴏᴛ  
+• /unban – ᴜɴʙᴀɴ ᴀ ᴜsᴇʀ  
+• /restart – ʀᴇsᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ  
+• /broadcast – sᴇɴᴅ ᴀ ᴍᴇssᴀᴢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs  
+• /update - ᴜᴘᴅᴀᴛᴇ ʙᴏᴛ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ""",
+                    "image": "photo_2025-08-31_23-16-44.jpg",
+                    "buttons": [
+                        [
+                            {"text": "ʀᴇǫᴜɪʀᴇᴍᴇɴᴛs", "url": "callback:help_requirements"},
+                            {"text": "ʜᴏᴡ ɪᴛs ᴡᴏʀᴋ?", "url": "callback:help_how"}
+                        ],
+                        [
+                            {"text": "ᴛʀᴏᴜʙʟᴇsʜᴏᴏᴛ", "url": "callback:help_troubleshoot"}
+                        ],
+                        [
+                            {"text": "ʙᴀᴄᴋ", "url": "callback:back_start"},
+                            {"text": "ᴄʟᴏsᴇ", "url": "callback:close"}
+                        ]
+                    ]
+                }
+            }
+    return {
+        "start": {
+            "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
+• ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs �ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
+
+✦ ғᴇᴀᴛᴜʀᴇs:
+• ғᴀsᴛ ᴀɴᴅ ᴇᴀsʏ ʟɪɴᴋ ᴘʀᴏᴄᴇssɪɴɢ
+• ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
+• ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
+✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʏ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
+            "image": "photo_2025-08-31_23-17-37.jpg",
+            "buttons": [
+                [{"text": "ᴀʙᴏᴜᴛ", "url": "callback:about"}],
+                [{"text": "ᴄʟᴏsᴇ", "url": "callback:close"}]
+            ]
+        },
+        "help": {
+            "text": """✦ ʙᴏᴛ ʜᴇʟᴘ ɢᴜɪᴅᴇ
+
+┌─ ᴜsᴇʀ ᴄᴏᴍᴍᴀɴᴅs ─┐
+• /start – sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ᴀɴᴅ ᴠɪᴇᴡ ᴡᴇʜᴄᴏᴍᴇ ᴍᴇssᴀɢᴇ  
+• /help – sʜᴏᴡ ᴛʜɪs ʜᴇʟᴘ ɢᴜɪᴅᴇ   
+• /id – ɢᴇᴛ ʏᴏᴜʀ ɪᴅ
+• /settings - ᴄᴏɴꜰɪɢᴜʀᴇ ʙᴏᴛ ꜱᴇᴛᴛɪɴɢꜱ
+
+┌─ ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅs ─┐
+• /gen_link <channel_link/id> – ɢᴇɴᴇʀᴀᴛᴇ ᴀ ᴘᴇʀᴍᴀɴᴇɴᴛ ʙᴏᴛ ʟɪɴᴋ �ᴡɪᴛʜ ᴀ 5-ᴍɪɴᴜᴛᴇ ᴛᴇᴍᴘᴏʀᴀʀʏ ɪɴᴠɪᴛᴇ  
+• /batch_link – ɢᴇɴᴇʀᴀᴛᴇ ʟɪɴᴋs ꜰᴏʀ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴡʜᴇʀᴇ ᴛʜᴇ ʙᴏᴛ ɪs ᴀɴ ᴀᴅᴍɪɴ 
+• /debug <channel_link/id> – ᴄʜᴇᴄᴋ ᴀɴᴅ ᴅᴇʙᴜɢ ᴄʜᴀɴɴᴇʟ ᴘᴇʀᴍɪssɪᴏɴs
+• /list_channels – ʟɪsᴛ ᴀʟʟ ᴀᴄᴛɪᴠᴇ ᴄʜᴀɴɴᴇʟs ᴄᴏɴɴᴇᴄᴛᴇᴅ ᴛᴏ ᴛʜᴇ ʙᴏᴛ  
+• /troubleshoot – ᴅɪᴀɢɴᴏsᴇ ᴀɴᴅ ꜰɪx ᴄᴏᴍᴍᴏɴ ɪssᴜᴇs ᴡɪᴛʜ ᴛʜᴇ ʙᴏᴛ  
+• /admins - ʟɪꜱᴛ ᴀʟʟ ʙᴏᴛ ᴀᴅᴍɪɴꜱ
+• /users - ꜱʜᴏᴡ ᴜꜱᴇʀ ꜱᴛᴀᴛꜱ
+
+┌─ ᴏᴡɴᴇʀ ᴄᴏᴍᴍᴀɴᴅs ─┐
+• /auth – ᴀᴜᴛʜᴏʀɪᴢᴇ ᴀ ᴜsᴇʀ ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ᴛᴏ ʟɪᴍɪᴛᴇᴅ ᴄᴏᴍᴍᴀɴᴅs  
+• /deauth – ʀᴇᴍᴏᴠᴇ ᴀᴜᴛʜᴏʀɪᴢᴀᴛɪᴏɴ ꜰʀᴏᴍ ᴀ ᴜsᴇʀ  
+• /promote – ᴘʀᴏᴍᴏᴛᴇ ᴀ ᴜsᴇʀ ᴛᴏ ᴀᴅᴍɪɴ ᴡɪᴛʜ ꜰᴜʟʟ ʙᴏᴛ ᴀᴄᴄᴇss (ᴇxᴄᴇᴘᴛ ᴏᴡɴᴇʀ-ᴏɴʟʏ ᴄᴏᴍᴍᴀɴᴅs)  
+• /demote – ʀᴇᴠᴏᴋᴇ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ꜰʀᴏᴍ ᴀ �ᴜsᴇʀ  
+• /ban – ʙᴀɴ ᴀ �ᴜsᴇʀ ꜰʀᴏᴍ ᴜsɪɴɢ ᴛʜᴇ ʙᴏᴛ  
+• /unban – ᴜɴʙᴀɴ ᴀ ᴜsᴇʀ  
+• /restart – ʀᴇsᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ  
+• /broadcast – sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs  
+• /update - ᴜᴘᴅᴀᴛᴇ ʙᴏᴛ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ""",
+            "image": "photo_2025-08-31_23-16-44.jpg",
+            "buttons": [
+                [
+                    {"text": "ʀᴇǫᴜɪʀᴇᴍᴇɴᴛs", "url": "callback:help_requirements"},
+                    {"text": "ʜᴏᴡ ɪᴛs ᴡᴏʀᴋ?", "url": "callback:help_how"}
+                ],
+                [
+                    {"text": "ᴛʀᴏᴜʙʟᴇsʜᴏᴏᴛ", "url": "callback:help_troubleshoot"}
+                ],
+                [
+                    {"text": "ʙᴀᴄᴋ", "url": "callback:back_start"},
+                    {"text": "ᴄʟᴏsᴇ", "url": "callback:close"}
+                ]
+            ]
+        }
+    }
+
+def save_settings(settings):
+    """Save settings to JSON file."""
+    with open(SETTINGS_STORAGE, 'w') as f:
+        json.dump(settings, f, indent=2)
 
 async def cleanup_message(context, chat_id, message_id):
     """Clean up message after timeout."""
@@ -431,7 +581,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 1. ɪғ ʙᴏᴛ ɪs ɴᴏᴛ ᴡᴏʀᴋɪɴɢ, ᴇɴsᴜʀᴇ ɪᴛ ɪs ᴀᴅᴍɪɴ ɪɴ ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟs.  
 2. ᴠᴇʀɪғʏ ʙᴏᴛ ʜᴀs ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴄʀᴇᴀᴛᴇ ɪɴᴠɪᴛᴇ ʟɪɴᴋs.  
-3. ᴜꜱᴇ ᴄʜᴀɴɴᴇʟ ɪᴅ ɪɴꜱᴛᴇᴀᴅ ᴏꜰ ᴄʜᴀɴɴᴇʟ ʟɪɴᴋ 
+3. ᴜsᴇ ᴄʜᴀɴɴᴇʟ ɪᴅ ɪɴsᴛᴇᴀᴅ ᴏғ ᴄʜᴀɴɴᴇʟ ʟɪɴᴋ 
 4. ᴄʜᴇᴄᴋ ɪɴᴛᴇʀɴᴇᴛ ᴄᴏɴɴᴇᴄᴛɪᴏɴ ɪғ ʙᴏᴛ ғᴀɪʟs ᴛᴏ ʀᴇsᴘᴏɴᴅ.  
 5. ᴜsᴇ /debug <channel_link/id> ᴛᴏ ᴄʜᴇᴄᴋ ᴘᴇʀᴍɪssɪᴏɴ ɪssᴜᴇs.  
 
@@ -465,6 +615,173 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.delete_message()
         return ConversationHandler.END
     
+    # Settings navigation
+    elif data == "settings_main":
+        await settings_command_callback(update, context)
+        return SETTINGS_MAIN
+        
+    elif data == "settings_start":
+        await settings_start_callback(update, context)
+        return SETTINGS_START
+        
+    elif data == "settings_start_text":
+        await query.edit_message_text(
+            text="Send the new text you want to use for the /start command:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
+                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return SETTINGS_START_TEXT
+        
+    elif data == "settings_start_image":
+        await query.edit_message_text(
+            text="Send the new image you want to use for the /start command:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
+                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return SETTINGS_START_IMAGE
+        
+    elif data == "settings_start_buttons":
+        await settings_start_buttons_callback(update, context)
+        return SETTINGS_START_BUTTONS
+        
+    elif data == "settings_start_add_button":
+        await query.edit_message_text(
+            text="Send the button text and URL in the format:\nButtonText - URL\n\nFor multiple buttons in the same row, use | separator:\nButtonText1 - URL1 | ButtonText2 - URL2\n\nSpecial buttons:\nBack - callback:back_start\nClose - callback:close",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
+                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return SETTINGS_START_ADD_BUTTON
+        
+    elif data == "settings_start_remove_button":
+        await settings_start_remove_button_callback(update, context)
+        return SETTINGS_START_REMOVE_BUTTON
+        
+    elif data == "settings_help":
+        await settings_help_callback(update, context)
+        return SETTINGS_HELP
+        
+    elif data == "settings_help_text":
+        await query.edit_message_text(
+            text="Send the new text you want to use for the /help command:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
+                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return SETTINGS_HELP_TEXT
+        
+    elif data == "settings_help_image":
+        await query.edit_message_text(
+            text="Send the new image you want to use for the /help command:",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
+                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return SETTINGS_HELP_IMAGE
+        
+    elif data == "settings_help_buttons":
+        await settings_help_buttons_callback(update, context)
+        return SETTINGS_HELP_BUTTONS
+        
+    elif data == "settings_help_add_button":
+        await query.edit_message_text(
+            text="Send the button text and URL in the format:\nButtonText - URL\n\nFor multiple buttons in the same row, use | separator:\nButtonText1 - URL1 | ButtonText2 - URL2\n\nSpecial buttons:\nBack - callback:back_help\nClose - callback:close",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
+                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return SETTINGS_HELP_ADD_BUTTON
+        
+    elif data == "settings_help_remove_button":
+        await settings_help_remove_button_callback(update, context)
+        return SETTINGS_HELP_REMOVE_BUTTON
+        
+    # Handle button removal confirmation
+    elif data.startswith("remove_button_confirm_"):
+        button_index = int(data.split("_")[-1])
+        settings = load_settings()
+        
+        # Remove the button
+        row_idx = button_index // 10
+        col_idx = button_index % 10
+        
+        if row_idx < len(settings["start"]["buttons"]):
+            if col_idx < len(settings["start"]["buttons"][row_idx]):
+                del settings["start"]["buttons"][row_idx][col_idx]
+                
+                # Remove empty rows
+                settings["start"]["buttons"] = [row for row in settings["start"]["buttons"] if row]
+                
+                save_settings(settings)
+                await query.edit_message_text(
+                    text="✅ Button removed successfully!",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
+                        [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+                    ])
+                )
+                return SETTINGS_START_BUTTONS
+        
+        await query.edit_message_text(
+            text="❌ Error removing button.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
+                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return SETTINGS_START_BUTTONS
+        
+    elif data.startswith("remove_help_button_confirm_"):
+        button_index = int(data.split("_")[-1])
+        settings = load_settings()
+        
+        # Remove the button
+        row_idx = button_index // 10
+        col_idx = button_index % 10
+        
+        if row_idx < len(settings["help"]["buttons"]):
+            if col_idx < len(settings["help"]["buttons"][row_idx]):
+                del settings["help"]["buttons"][row_idx][col_idx]
+                
+                # Remove empty rows
+                settings["help"]["buttons"] = [row for row in settings["help"]["buttons"] if row]
+                
+                save_settings(settings)
+                await query.edit_message_text(
+                    text="✅ Button removed successfully!",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
+                        [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+                    ])
+                )
+                return SETTINGS_HELP_BUTTONS
+        
+        await query.edit_message_text(
+            text="❌ Error removing button.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
+                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return SETTINGS_HELP_BUTTONS
+        
+    # Handle button removal cancellation
+    elif data.startswith("remove_button_cancel_"):
+        await settings_start_buttons_callback(update, context)
+        return SETTINGS_START_BUTTONS
+        
+    elif data.startswith("remove_help_button_cancel_"):
+        await settings_help_buttons_callback(update, context)
+        return SETTINGS_HELP_BUTTONS
+    
     return ConversationHandler.END
 
 async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -476,38 +793,61 @@ async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         message = update.message
     
-    # Create inline keyboard with About button
-    keyboard = [
-        [InlineKeyboardButton("ᴀʙᴏᴜᴛ", callback_data="about"),
-        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
-    ]
+    settings = load_settings()
+    start_settings = settings["start"]
+    
+    # Create inline keyboard from settings
+    keyboard = []
+    for row in start_settings["buttons"]:
+        keyboard_row = []
+        for button in row:
+            if button["url"].startswith("callback:"):
+                callback_data = button["url"].replace("callback:", "")
+                keyboard_row.append(InlineKeyboardButton(button["text"], callback_data=callback_data))
+            else:
+                keyboard_row.append(InlineKeyboardButton(button["text"], url=button["url"]))
+        keyboard.append(keyboard_row)
+    
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     # Send message with image and buttons
     if query:
-        await query.edit_message_text(
-            text="""✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
-• ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
-
-✦ ғᴇᴀᴛᴜʀᴇs:
-• ғᴀsᴛ ᴀɴᴅ ᴇᴀsʏ ʟɪɴᴋ ᴘʀᴏᴄᴇssɪɴɢ
-• ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
-• ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
-✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʏ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
-            reply_markup=reply_markup
-        )
+        try:
+            # Try to send with image first
+            if os.path.exists(start_settings["image"]):
+                await query.edit_message_media(
+                    media=InputMediaPhoto(media=open(start_settings["image"], 'rb'), caption=start_settings["text"]),
+                    reply_markup=reply_markup
+                )
+            else:
+                await query.edit_message_text(
+                    text=start_settings["text"],
+                    reply_markup=reply_markup
+                )
+        except:
+            await query.edit_message_text(
+                text=start_settings["text"],
+                reply_markup=reply_markup
+            )
     else:
-        await message.reply_text(
-            text="""✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
-• ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
-
-✦ ғᴇᴀᴛᴜʀᴇs:
-• ғᴀsᴛ ᴀɴᴓ ᴇᴀsʏ ʟɪɴᴋ ᴘʀᴏᴄᴇssɪɴɢ
-• ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
-• ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
-✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʏ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
-            reply_markup=reply_markup
-        )
+        try:
+            # Try to send with image first
+            if os.path.exists(start_settings["image"]):
+                await message.reply_photo(
+                    photo=open(start_settings["image"], 'rb'),
+                    caption=start_settings["text"],
+                    reply_markup=reply_markup
+                )
+            else:
+                await message.reply_text(
+                    text=start_settings["text"],
+                    reply_markup=reply_markup
+                )
+        except:
+            await message.reply_text(
+                text=start_settings["text"],
+                reply_markup=reply_markup
+            )
 
 async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Help command callback for button navigation."""
@@ -519,58 +859,55 @@ async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TY
         message = update.message
     
     user_id = update.effective_user.id
+    settings = load_settings()
+    help_settings = settings["help"]
     
     if is_admin(user_id):
-        # Create inline keyboard for admin help
-        keyboard = [
-            [
-                InlineKeyboardButton("ʀᴇǫᴜɪʀᴇᴍᴇɴᴛs", callback_data="help_requirements"),
-                InlineKeyboardButton("ʜᴏᴡ ɪᴛs ᴡᴏʀᴋ?", callback_data="help_how")
-            ],
-            [
-                InlineKeyboardButton("ᴛʀᴏᴜʙʟᴇsʜᴏᴏᴛ", callback_data="help_troubleshoot")
-            ],
-            [
-                InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="back_start"),
-                InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
-            ]
-        ]
+        # Create inline keyboard from settings
+        keyboard = []
+        for row in help_settings["buttons"]:
+            keyboard_row = []
+            for button in row:
+                if button["url"].startswith("callback:"):
+                    callback_data = button["url"].replace("callback:", "")
+                    keyboard_row.append(InlineKeyboardButton(button["text"], callback_data=callback_data))
+                else:
+                    keyboard_row.append(InlineKeyboardButton(button["text"], url=button["url"]))
+            keyboard.append(keyboard_row)
+        
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        help_text = """✦ ʙᴏᴛ ʜᴇʟᴘ ɢᴜɪᴅᴇ
-
-┌─ ᴜsᴇʀ ᴄᴏᴍᴍᴀɴᴅs ─┐
-• /start – sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ᴀɴᴅ ᴠɪᴇᴡ ᴡᴇʟᴄᴏᴍᴇ ᴍᴇssᴀɢᴇ  
-• /help – sʜᴏᴡ ᴛʜɪs ʜᴇʟᴘ ɢᴜɪᴅᴇ   
-• /id – ɢᴇᴛ ʏᴏᴜʀ ɪᴅ
-
-┌─ ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅs ─┐
-• /gen_link <channel_link/id> – ɢᴇɴᴇʀᴀᴛᴇ ᴀ ᴘᴇʀᴍᴀɴᴇɴᴛ ʙᴏᴛ ʟɪɴᴋ ᴡɪᴛʜ ᴀ 5-ᴍɪɴᴜᴛᴇ ᴛᴇᴍᴘᴏʀᴀʀʏ ɪɴᴠɪᴛᴇ  
-• /batch_link – ɢᴇɴᴇʀᴀᴛᴇ ʟɪɴᴋs ꜰᴏʀ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴡʜᴇʀᴇ ᴛʜᴇ ʙᴏᴛ ɪs ᴀɴ ᴀᴅᴍɪɴ 
-• /debug <channel_link/id> – ᴄʜᴇᴄᴋ ᴀɴᴅ ᴅᴇʙᴜɢ ᴄʜᴀɴɴᴇʟ ᴘᴇʀᴍɪssɪᴏɴs
-• /list_channels – ʟɪsᴛ ᴀʟʟ ᴀᴄᴛɪᴠᴇ ᴄʜᴀɴɴᴇʟs ᴄᴏɴɴᴇᴄᴛᴒᴅ ᴛᴏ ᴛʜᴇ ʙᴏᴛ  
-• /troubleshoot – ᴅɪᴀɢɴᴏsᴇ ᴀɴᴅ ꜰɪx ᴄᴏᴍᴍᴏɴ ɪssᴜᴇs ᴡɪᴛʜ ᴛʜᴇ ʙᴏᴛ  
-
-┌─ ᴏᴡɴᴇʀ ᴄᴏᴍᴍᴀɴᴅs ─┐
-• /auth – ᴀᴜᴛʜᴏʀɪᴢᴇ ᴀ ᴜsᴇʀ ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ᴛᴏ ʟɪᴍɪᴛᴇᴅ ᴄᴏᴍᴍᴀɴᴅs  
-• /deauth – ʀᴇᴍᴏᴠᴇ ᴀᴜᴛʜᴏʀɪᴢᴀᴛɪᴏɴ ꜰʀᴏᴍ ᴀ ᴜsᴇʀ  
-• /promote – ᴘʀᴏᴍᴏᴛᴇ ᴀ ᴜsᴇʀ ᴛᴏ ᴀᴅᴍɪɴ ᴡɪᴛʜ ꜰᴜʟʟ ʙᴏᴛ ᴀᴄᴄᴇss (ᴇxᴄᴇᴘᴛ ᴏᴡɴᴇʀ-ᴏɴʟʏ ᴄᴏᴜᴍᴀɴᴅs)  
-• /demote – ʀᴇᴠᴏᴋᴇ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ꜰʀᴏᴍ ᴀ ᴜsᴇʀ  
-• /ban – ʙᴀɴ ᴀ ᴜsᴇʀ ꜰʀᴏᴍ ᴜsɪɴɢ ᴛʜᴇ ʙᴏᴛ  
-• /unban – ᴜɴʙᴀɴ ᴀ ᴜsᴇʀ  
-• /restart – ʀᴇsᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ  
-• /broadcast – sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs  """
-        
         if query:
-            await query.edit_message_text(text=help_text, reply_markup=reply_markup)
+            try:
+                # Try to send with image first
+                if os.path.exists(help_settings["image"]):
+                    await query.edit_message_media(
+                        media=InputMediaPhoto(media=open(help_settings["image"], 'rb'), caption=help_settings["text"]),
+                        reply_markup=reply_markup
+                    )
+                else:
+                    await query.edit_message_text(text=help_settings["text"], reply_markup=reply_markup)
+            except:
+                await query.edit_message_text(text=help_settings["text"], reply_markup=reply_markup)
         else:
-            await message.reply_text(text=help_text, reply_markup=reply_markup)
+            try:
+                # Try to send with image first
+                if os.path.exists(help_settings["image"]):
+                    await message.reply_photo(
+                        photo=open(help_settings["image"], 'rb'),
+                        caption=help_settings["text"],
+                        reply_markup=reply_markup
+                    )
+                else:
+                    await message.reply_text(text=help_settings["text"], reply_markup=reply_markup)
+            except:
+                await message.reply_text(text=help_settings["text"], reply_markup=reply_markup)
     else:
         # Inline keyboard for non-admins
         keyboard = [
             [InlineKeyboardButton("Contact Owner", url="https://t.me/Quarel7")],
             [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="back_start"),
-            InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         help_text = """This bot generates permanent channel links with temporary invites for admins only.
@@ -579,6 +916,348 @@ async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TY
             await query.edit_message_text(help_text, reply_markup=reply_markup)
         else:
             await message.reply_text(help_text, reply_markup=reply_markup)
+
+# Settings command handlers
+async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Settings command handler."""
+    if not is_owner(update.effective_user.id):
+        await update.message.reply_text("You are not authorized to use this command.")
+        return
+    
+    await settings_command_callback(update, context)
+
+async def settings_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Settings command callback."""
+    query = update.callback_query
+    if query:
+        await query.answer()
+        message = query.message
+    else:
+        message = update.message
+    
+    keyboard = [
+        [InlineKeyboardButton("Start", callback_data="settings_start")],
+        [InlineKeyboardButton("Help", callback_data="settings_help")],
+        [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    text = "Choose the settings you want to configure:"
+    
+    if query:
+        await query.edit_message_text(text=text, reply_markup=reply_markup)
+    else:
+        await message.reply_text(text=text, reply_markup=reply_markup)
+    
+    return SETTINGS_MAIN
+
+async def settings_start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Start settings callback."""
+    query = update.callback_query
+    await query.answer()
+    
+    keyboard = [
+        [InlineKeyboardButton("Text", callback_data="settings_start_text")],
+        [InlineKeyboardButton("Image", callback_data="settings_start_image")],
+        [InlineKeyboardButton("Buttons", callback_data="settings_start_buttons")],
+        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_main"),
+         InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        text="Choose the option you want to change for /start command:",
+        reply_markup=reply_markup
+    )
+    
+    return SETTINGS_START
+
+async def settings_start_buttons_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Start buttons settings callback."""
+    query = update.callback_query
+    await query.answer()
+    
+    keyboard = [
+        [InlineKeyboardButton("Add Button", callback_data="settings_start_add_button")],
+        [InlineKeyboardButton("Remove Button", callback_data="settings_start_remove_button")],
+        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
+         InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        text="Choose the option for button management:",
+        reply_markup=reply_markup
+    )
+    
+    return SETTINGS_START_BUTTONS
+
+async def settings_start_remove_button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Start remove button callback."""
+    query = update.callback_query
+    await query.answer()
+    
+    settings = load_settings()
+    buttons = settings["start"]["buttons"]
+    
+    if not buttons:
+        await query.edit_message_text(
+            text="No buttons to remove.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
+                 InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return SETTINGS_START_BUTTONS
+    
+    # Create a list of all buttons with their positions
+    keyboard = []
+    button_index = 0
+    
+    for row_idx, row in enumerate(buttons):
+        keyboard_row = []
+        for col_idx, button in enumerate(row):
+            callback_data = f"remove_button_confirm_{row_idx * 10 + col_idx}"
+            keyboard_row.append(InlineKeyboardButton(button["text"], callback_data=callback_data))
+        keyboard.append(keyboard_row)
+        button_index += len(row)
+    
+    # Add navigation buttons
+    keyboard.append([
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ])
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        text="Select the button you want to remove:",
+        reply_markup=reply_markup
+    )
+    
+    return SETTINGS_START_REMOVE_BUTTON
+
+async def settings_help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Help settings callback."""
+    query = update.callback_query
+    await query.answer()
+    
+    keyboard = [
+        [InlineKeyboardButton("Text", callback_data="settings_help_text")],
+        [InlineKeyboardButton("Image", callback_data="settings_help_image")],
+        [InlineKeyboardButton("Buttons", callback_data="settings_help_buttons")],
+        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_main"),
+         InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        text="Choose the option you want to change for /help command:",
+        reply_markup=reply_markup
+    )
+    
+    return SETTINGS_HELP
+
+async def settings_help_buttons_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Help buttons settings callback."""
+    query = update.callback_query
+    await query.answer()
+    
+    keyboard = [
+        [InlineKeyboardButton("Add Button", callback_data="settings_help_add_button")],
+        [InlineKeyboardButton("Remove Button", callback_data="settings_help_remove_button")],
+        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
+         InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        text="Choose the option for button management:",
+        reply_markup=reply_markup
+    )
+    
+    return SETTINGS_HELP_BUTTONS
+
+async def settings_help_remove_button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Help remove button callback."""
+    query = update.callback_query
+    await query.answer()
+    
+    settings = load_settings()
+    buttons = settings["help"]["buttons"]
+    
+    if not buttons:
+        await query.edit_message_text(
+            text="No buttons to remove.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
+                 InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return SETTINGS_HELP_BUTTONS
+    
+    # Create a list of all buttons with their positions
+    keyboard = []
+    button_index = 0
+    
+    for row_idx, row in enumerate(buttons):
+        keyboard_row = []
+        for col_idx, button in enumerate(row):
+            callback_data = f"remove_help_button_confirm_{row_idx * 10 + col_idx}"
+            keyboard_row.append(InlineKeyboardButton(button["text"], callback_data=callback_data))
+        keyboard.append(keyboard_row)
+        button_index += len(row)
+    
+    # Add navigation buttons
+    keyboard.append([
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ])
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await query.edit_message_text(
+        text="Select the button you want to remove:",
+        reply_markup=reply_markup
+    )
+    
+    return SETTINGS_HELP_REMOVE_BUTTON
+
+async def settings_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle text settings updates."""
+    user_id = update.effective_user.id
+    if not is_owner(user_id):
+        return
+    
+    settings = load_settings()
+    new_text = update.message.text
+    
+    # Determine which setting we're updating based on conversation state
+    if context.user_data.get('settings_mode') == 'start_text':
+        settings["start"]["text"] = new_text
+        await update.message.reply_text(
+            "✅ Start text updated successfully!",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
+                 InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+    elif context.user_data.get('settings_mode') == 'help_text':
+        settings["help"]["text"] = new_text
+        await update.message.reply_text(
+            "✅ Help text updated successfully!",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
+                 InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+    
+    save_settings(settings)
+    return ConversationHandler.END
+
+async def settings_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle image settings updates."""
+    user_id = update.effective_user.id
+    if not is_owner(user_id):
+        return
+    
+    if not update.message.photo:
+        await update.message.reply_text("Please send an image.")
+        return
+    
+    settings = load_settings()
+    photo = update.message.photo[-1]
+    file_id = photo.file_id
+    
+    # Determine which setting we're updating based on conversation state
+    if context.user_data.get('settings_mode') == 'start_image':
+        settings["start"]["image"] = file_id
+        await update.message.reply_text(
+            "✅ Start image updated successfully!",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
+                 InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+    elif context.user_data.get('settings_mode') == 'help_image':
+        settings["help"]["image"] = file_id
+        await update.message.reply_text(
+            "✅ Help image updated successfully!",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
+                 InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+    
+    save_settings(settings)
+    return ConversationHandler.END
+
+async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle button settings updates."""
+    user_id = update.effective_user.id
+    if not is_owner(user_id):
+        return
+    
+    button_text = update.message.text
+    settings = load_settings()
+    
+    try:
+        # Parse button configuration
+        buttons = []
+        rows = button_text.split('\n')
+        
+        for row in rows:
+            row_buttons = []
+            button_configs = row.split('|')
+            
+            for config in button_configs:
+                config = config.strip()
+                if ' - ' in config:
+                    text, url = config.split(' - ', 1)
+                    text = text.strip()
+                    url = url.strip()
+                    
+                    # Handle special callback buttons
+                    if url.lower() in ['callback:back_start', 'callback:back_help', 'callback:close']:
+                        url = url.lower()
+                    
+                    row_buttons.append({"text": text, "url": url})
+            
+            if row_buttons:
+                buttons.append(row_buttons)
+        
+        # Determine which setting we're updating based on conversation state
+        if context.user_data.get('settings_mode') == 'start_button':
+            settings["start"]["buttons"] = buttons
+            await update.message.reply_text(
+                "✅ Start buttons updated successfully!",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
+                     InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+                ])
+            )
+        elif context.user_data.get('settings_mode') == 'help_button':
+            settings["help"]["buttons"] = buttons
+            await update.message.reply_text(
+                "✅ Help buttons updated successfully!",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
+                     InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+                ])
+            )
+        
+        save_settings(settings)
+        return ConversationHandler.END
+        
+    except Exception as e:
+        await update.message.reply_text(
+            f"❌ Error parsing button configuration: {str(e)}\n\nPlease use the correct format.",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
+                 InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            ])
+        )
+        return ConversationHandler.END
 
 # Command Handlers
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -638,9 +1317,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             
             message = await update.message.reply_text(
-                    "> *ɴᴏᴛᴇ\\:* ᴛʜɪs ɪɴᴠɪᴛᴇ ʟɪɴᴋ ᴇxᴘɪʀᴇs ɪɴ 5 ᴍɪɴᴜᴛᴇs\\. ɪғ ɪᴛ ᴇxᴘɪʀᴇs, ᴊᴜsᴛ ᴄʟɪᴄᴋ ᴛʜᴇ ᴘᴏsᴛ ʟɪɴᴋ ᴀɢᴀɪɴ ᴛᴏ ɢᴇᴛ ᴀ ɴᴇᴡ ᴏɴᴇ\\.",
-                        parse_mode="MarkdownV2"
-                        )
+                f"Note: This invite link expires in 5 minutes. If it expires, just click the post link again to get a new one.",
+            )
+
             # Schedule message cleanup
             asyncio.create_task(cleanup_message(context, update.effective_chat.id, message.message_id))
         else:
@@ -678,9 +1357,8 @@ async def batch_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     status_msg = await update.message.reply_text("Fetching all channels where bot is admin...")
     
     try:
-        # Get all chats where bot is a member
-        # Note: This is a simplified approach. In practice, you might need to maintain
-        # a list of channels where the bot has been added as admin
+        # This is a simplified approach - in a real implementation, you would need to
+        # maintain a list of all channels where the bot has been added as admin
         
         # For now, we'll use the channels already in our database
         data = load_data()
@@ -690,8 +1368,10 @@ async def batch_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
         
         count = 0
-        for channel_id in data["channels"]:
-            channel_data = data["channels"][channel_id]
+        bot_username = (await context.bot.get_me()).username
+        message = "Generated links for all channels:\n\n"
+        
+        for channel_id, channel_data in data["channels"].items():
             file_id = channel_data["file_id"]
             
             # Check if link exists and is valid
@@ -720,18 +1400,37 @@ async def batch_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         
                         count += 1
                         logger.info(f"Regenerated link for {channel_data['name']}")
+                        
+                        # Add to message
+                        bot_link = f"https://t.me/{bot_username}?start={file_id}"
+                        message += f"• {channel_data['name']}: {bot_link}\n"
                     except Exception as e:
                         logger.error(f"Error regenerating link for {channel_data['name']}: {e}")
+                        message += f"• {channel_data['name']}: Error - {str(e)}\n"
+                else:
+                    # Link is still valid
+                    bot_link = f"https://t.me/{bot_username}?start={file_id}"
+                    message += f"• {channel_data['name']}: {bot_link}\n"
+                    count += 1
         
         save_data(data)
-        await status_msg.edit_text(f"Batch link regeneration completed. Updated {count} links.")
+        
+        # Split message if too long
+        if len(message) > 4000:
+            parts = [message[i:i+4000] for i in range(0, len(message), 4000)]
+            for part in parts:
+                await update.message.reply_text(part)
+        else:
+            await update.message.reply_text(message)
+            
+        await status_msg.edit_text(f"Batch link generation completed. Processed {count} channels.")
         
     except Exception as e:
         logger.error(f"Error in batch_link: {e}")
         await status_msg.edit_text(f"Error: {str(e)}")
 
 async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """List all active channels and their current links."""
+    """List all active channels and their current links with pagination."""
     user_id = update.effective_user.id
     
     if not is_admin(user_id):
@@ -745,10 +1444,23 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("No active channels found.\n\nUse /gen_link to create channel links.")
             return
         
-        bot_username = (await context.bot.get_me()).username
-        message = "Active Channels:\n\n"
+        # Get page number from context args or default to 1
+        page = 1
+        if context.args and context.args[0].isdigit():
+            page = int(context.args[0])
         
-        for channel_id, channel_data in data["channels"].items():
+        bot_username = (await context.bot.get_me()).username
+        channels = list(data["channels"].items())
+        total_pages = (len(channels) + LIST_CHANNELS_PAGE_SIZE - 1) // LIST_CHANNELS_PAGE_SIZE
+        page = max(1, min(page, total_pages))
+        
+        start_idx = (page - 1) * LIST_CHANNELS_PAGE_SIZE
+        end_idx = min(start_idx + LIST_CHANNELS_PAGE_SIZE, len(channels))
+        
+        message = f"Active Channels (Page {page}/{total_pages}):\n\n"
+        
+        for i in range(start_idx, end_idx):
+            channel_id, channel_data = channels[i]
             file_id = channel_data["file_id"]
             
             if file_id in data["links"]:
@@ -764,15 +1476,39 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         message += f"Total: {len(data['channels'])} channels"
         
-        # Split message if too long
-        if len(message) > 4000:
-            await update.message.reply_text(f"You have {len(data['channels'])} active channels. Too many to display all. Use /gen_link to manage individual channels.")
-        else:
-            await update.message.reply_text(message)
+        # Create pagination buttons
+        keyboard = []
+        if total_pages > 1:
+            if page > 1:
+                keyboard.append([InlineKeyboardButton("⬅️ Previous", callback_data=f"list_channels_{page-1}")])
+            if page < total_pages:
+                if keyboard:
+                    keyboard[0].append(InlineKeyboardButton("Next ➡️", callback_data=f"list_channels_{page+1}"))
+                else:
+                    keyboard.append([InlineKeyboardButton("Next ➡️", callback_data=f"list_channels_{page+1}")])
+        
+        keyboard.append([InlineKeyboardButton(f"Page {page}/{total_pages}", callback_data="page_info")])
+        keyboard.append([InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")])
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await update.message.reply_text(message, reply_markup=reply_markup)
                 
     except Exception as e:
         logger.error(f"Error listing channels: {e}")
         await update.message.reply_text(f"Error retrieving channel list: {str(e)}")
+
+async def list_channels_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle list channels pagination callbacks."""
+    query = update.callback_query
+    await query.answer()
+    
+    data = query.data
+    if data.startswith("list_channels_"):
+        page = int(data.split("_")[2])
+        context.args = [str(page)]
+        await list_channels(update, context)
+        await query.delete_message()
 
 async def debug_channel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Debug channel permissions."""
@@ -835,18 +1571,75 @@ async def troubleshoot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 1. ɪғ ʙᴏᴛ ɪs ɴᴏᴛ ᴡᴏʀᴋɪɴɢ, ᴇɴsᴜʀᴇ ɪᴛ ɪs ᴀᴅᴍɪɴ ɪɴ ᴛᴀʀɢᴇᴛ ᴄʜᴀɴɴᴇʟs.  
 2. ᴠᴇʀɪғʏ ʙᴏᴛ ʜᴀs ᴘᴇʀᴍɪssɪᴏɴ ᴛᴏ ᴄʀᴇᴀᴛᴇ ɪɴᴠɪᴛᴇ ʟɪɴᴋs.  
-3. ᴜꜱᴇ ᴄʜᴀɴɴᴇʟ ɪᴅ ɪɴꜱᴛᴇᴀᴅ ᴏꜰ ᴄʜᴀɴɴᴇʟ ʟɪɴᴋ 
+3. ᴜsᴇ ᴄʜᴀɴɴᴇʟ ɪᴅ ɪɴsᴛᴇᴀᴅ ᴏғ ᴄʜᴀɴɴᴇʟ ʟɪɴᴋ 
 4. ᴄʜᴇᴄᴋ ɪɴᴛᴇʀɴᴇᴛ ᴄᴏɴɴᴇᴄᴛɪᴏɴ ɪғ ʙᴏᴛ ғᴀɪʟs ᴛᴏ ʀᴇsᴘᴏɴᴅ.  
 5. ᴜsᴇ /debug <channel_link/id> ᴛᴏ ᴄʜᴇᴄᴋ ᴘᴇʀᴍɪssɪᴏɴ ɪssᴜᴇs.  
 
 ғᴏʀ ғᴜʀᴛʜᴇʀ ᴀssɪsᴛᴀɴᴄᴇ, ᴄᴏɴᴛᴀᴄᴛ [ᴏᴡɴᴇʀ](https://t.me/Quarel7)."""
     
-    await update.message.reply_text(troubleshoot_text, parse_mode="Markdown")
+    keyboard = [
+        [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(troubleshoot_text, reply_markup=reply_markup, parse_mode="Markdown")
 
 async def get_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Get user ID."""
     user_id = update.effective_user.id
     await update.message.reply_text(f"Your ID: `{user_id}`", parse_mode="Markdown")
+
+async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """List all bot admins."""
+    user_id = update.effective_user.id
+    
+    if not is_admin(user_id):
+        await update.message.reply_text("You are not authorized to use this bot.")
+        return
+    
+    data = load_data()
+    admins = data.get("admins", [])
+    
+    message = "Bot Admins:\n\n"
+    for i, admin_id in enumerate(admins, 1):
+        try:
+            user = await context.bot.get_chat(admin_id)
+            message += f"{i}. {user.first_name} ({user.id})\n"
+        except:
+            message += f"{i}. Unknown User ({admin_id})\n"
+    
+    keyboard = [
+        [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(message, reply_markup=reply_markup)
+
+async def users_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show user statistics."""
+    user_id = update.effective_user.id
+    
+    if not is_admin(user_id):
+        await update.message.reply_text("You are not authorized to use this bot.")
+        return
+    
+    data = load_data()
+    users_count = len(data.get("users", {}))
+    admins_count = len(data.get("admins", []))
+    banned_count = len(data.get("banned_users", []))
+    
+    message = f"""User Statistics:
+
+• Total Users: {users_count}
+• Admins: {admins_count}
+• Banned Users: {banned_count}"""
+
+    keyboard = [
+        [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    await update.message.reply_text(message, reply_markup=reply_markup)
 
 # Owner-only commands
 async def auth_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1050,9 +1843,17 @@ async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text("Restarting bot...")
     
-    # This is a simple restart implementation
-    # In production, you might want to use a process manager
-    os.execv(sys.executable, ['python'] + sys.argv)
+    # Save current state
+    data = load_data()
+    data["restart"] = {
+        "chat_id": update.effective_chat.id,
+        "message_id": update.effective_message.message_id,
+        "time": datetime.utcnow().isoformat()
+    }
+    save_data(data)
+    
+    # Use a proper restart mechanism
+    os.execl(sys.executable, sys.executable, *sys.argv)
 
 async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Broadcast a message to all users."""
@@ -1094,7 +1895,7 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     for user_id in user_ids:
         try:
-            await context.bot.send_message(user_id, f"{message_text}")
+            await context.bot.send_message(user_id, f"📢 Broadcast:\n\n{message_text}")
             success_count += 1
         except Exception as e:
             logger.error(f"Failed to send broadcast to {user_id}: {e}")
@@ -1103,6 +1904,41 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"Broadcast completed.\nSuccess: {success_count}\nFailed: {fail_count}"
     )
+
+async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Update the bot from GitHub."""
+    if not is_owner(update.effective_user.id):
+        await update.message.reply_text("You are not authorized to use this command.")
+        return
+    
+    status_msg = await update.message.reply_text("𖡡 ᴩᴜʟʟɪɴɢ ʟᴀᴛᴇꜱᴛ ᴜᴩᴅᴀᴛᴇ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ...")
+    
+    try:
+        # Pull latest changes from GitHub
+        result = subprocess.run(["git", "pull"], capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            changes = result.stdout.strip()
+            if not changes or "Already up to date" in changes:
+                await status_msg.edit_text("✅ ʙᴏᴛ ɪꜱ ᴀʟʀᴇᴀᴅy ᴜᴩ ᴛᴏ ᴅᴀᴛᴇ!")
+                return
+            
+            await status_msg.edit_text(f"✅ ᴜᴩᴅᴀᴛᴇᴅ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ!\n\nChanges:\n{changes}")
+            await asyncio.sleep(2)
+            
+            await status_msg.edit_text("♻️ ʀᴇꜱᴛᴀʀᴛɪɴɢ....")
+            await asyncio.sleep(2)
+            
+            await status_msg.edit_text("✦ ʀᴇꜱᴛᴀʀᴛᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟy!")
+            await asyncio.sleep(3)
+            
+            # Restart the bot
+            os.execl(sys.executable, sys.executable, *sys.argv)
+        else:
+            await status_msg.edit_text(f"❌ ꜰᴀɪʟᴇᴅ ᴛᴏ ᴜᴩᴅᴀᴛᴇ: {result.stderr}")
+            
+    except Exception as e:
+        await status_msg.edit_text(f"❌ ᴇʀʀᴏʀ ᴜᴩᴅᴀᴛɪɴɢ: {str(e)}")
 
 # Main Application
 def main():
@@ -1126,6 +1962,9 @@ def main():
     application.add_handler(CommandHandler("debug", debug_channel))
     application.add_handler(CommandHandler("troubleshoot", troubleshoot))
     application.add_handler(CommandHandler("id", get_id))
+    application.add_handler(CommandHandler("settings", settings_command))
+    application.add_handler(CommandHandler("admins", admins_command))
+    application.add_handler(CommandHandler("users", users_command))
     
     # Owner commands
     application.add_handler(CommandHandler("auth", auth_user))
@@ -1136,9 +1975,36 @@ def main():
     application.add_handler(CommandHandler("unban", unban_user))
     application.add_handler(CommandHandler("restart", restart_bot))
     application.add_handler(CommandHandler("broadcast", broadcast_message))
+    application.add_handler(CommandHandler("update", update_bot))
     
     # Button handlers
-    application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close)$"))
+    application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
+    
+    # List channels pagination
+    application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
+    
+    # Settings conversation handler
+    settings_conv_handler = ConversationHandler(
+        entry_points=[CommandHandler("settings", settings_command)],
+        states={
+            SETTINGS_MAIN: [CallbackQueryHandler(settings_command_callback, pattern="^settings_main$")],
+            SETTINGS_START: [CallbackQueryHandler(settings_start_callback, pattern="^settings_start$")],
+            SETTINGS_START_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler)],
+            SETTINGS_START_IMAGE: [MessageHandler(filters.PHOTO, settings_image_handler)],
+            SETTINGS_START_BUTTONS: [CallbackQueryHandler(settings_start_buttons_callback, pattern="^settings_start_buttons$")],
+            SETTINGS_START_ADD_BUTTON: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler)],
+            SETTINGS_START_REMOVE_BUTTON: [CallbackQueryHandler(settings_start_remove_button_callback, pattern="^settings_start_remove_button$")],
+            SETTINGS_HELP: [CallbackQueryHandler(settings_help_callback, pattern="^settings_help$")],
+            SETTINGS_HELP_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler)],
+            SETTINGS_HELP_IMAGE: [MessageHandler(filters.PHOTO, settings_image_handler)],
+            SETTINGS_HELP_BUTTONS: [CallbackQueryHandler(settings_help_buttons_callback, pattern="^settings_help_buttons$")],
+            SETTINGS_HELP_ADD_BUTTON: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler)],
+            SETTINGS_HELP_REMOVE_BUTTON: [CallbackQueryHandler(settings_help_remove_button_callback, pattern="^settings_help_remove_button$")],
+        },
+        fallbacks=[CommandHandler("cancel", lambda update, context: ConversationHandler.END)],
+    )
+    
+    application.add_handler(settings_conv_handler)
     
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
@@ -1148,6 +2014,23 @@ def main():
         await application.initialize()
         await application.start()
         await application.updater.start_polling()
+        
+        # Check if we need to send restart confirmation
+        data = load_data()
+        if "restart" in data:
+            restart_data = data["restart"]
+            try:
+                await application.bot.edit_message_text(
+                    chat_id=restart_data["chat_id"],
+                    message_id=restart_data["message_id"],
+                    text="✅ ʙᴏᴛ ʀᴇꜱᴛᴀʀᴛᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟy!"
+                )
+            except:
+                pass
+            
+            # Remove restart data
+            del data["restart"]
+            save_data(data)
         
         try:
             await asyncio.Event().wait()
