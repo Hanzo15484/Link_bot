@@ -1881,10 +1881,20 @@ async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text("♻️ ʀᴇꜱᴛᴀʀᴛɪɴɢ ʙᴏᴛ....")
     await asyncio.sleep(1)
-    
-    await status_msg.edit_text("✦ ʀᴇꜱᴛᴀʀᴛᴇᴅ ꜱᴜᴄᴄᴇꜱꜰᴜʟʟy!")
-    await asyncio.sleep(2)
-    
+    try:
+        await update.message.reply_text("♻️ ʀᴇꜱᴛᴀʀᴛɪɴɢ ʙᴏᴛ in 3 ꜱᴇᴄᴏɴᴅs....")
+        await asyncio.sleep(3) 
+
+        await status_msg.edit_text("♻️ ʀᴇꜱᴛᴀʀᴛɪɴɢ ʙᴏᴛ in 2ꜱᴇᴄᴏɴᴅs....")
+        await asyncio.sleep(2)
+
+        await status_msg.edit_text("♻️ ʀᴇꜱᴛᴀʀᴛɪɴɢ ʙᴏᴛ in 1 ꜱᴇᴄᴏɴᴅs....")
+        await asyncio.sleep(1)  
+
+        await status_msg.edit_text("✦ ʀᴇꜱᴛᴀʀᴛᴇᴅ ꜱᴜᴄᴄᴇꜱꜰᴜʟʟy!")
+        await asyncio.sleep(2)
+    except:
+        pass
     # Save current state
     data = load_data()
     data["restart"] = {
