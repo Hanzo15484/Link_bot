@@ -625,14 +625,18 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_START
         
     elif data == "settings_start_text":
-        await query.edit_message_text(
-            text="Send the new text you want to use for the /start command:",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
-                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
-            ])
-        )
-        return SETTINGS_START_TEXT
+await query.edit_message_text(
+    text="Send the new text you want to use for the /start command:",
+    reply_markup=InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
+                InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+            ]
+        ]
+    )
+)
+return SETTINGS_START_TEXT
         
     elif data == "settings_start_image":
         await query.edit_message_text(
@@ -2049,3 +2053,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
