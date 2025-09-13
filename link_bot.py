@@ -30,7 +30,7 @@ BOT_TOKEN = "7965411711:AAHcFqZYLiNE6bvmBE2iQB_CYBWxME4PuKs"
 OWNER_ID = 5373577888
 ADMIN_IDS = [5373577888, 6170814776, 6959143950]
 LINK_DURATION = 5 * 60  # 5 minutes in seconds
-MESSAGE_CLEANUP_TIME = 6 * 60  # 6 minutes in seconds
+MESSAGE_CLEANUP_TIME = 3 * 60  # 6 minutes in seconds
 
 # JSON storage file
 JSON_STORAGE = "channel_data.json"
@@ -626,27 +626,27 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     elif data == "settings_start_text":
         await query.edit_message_text(
-    text="Send the new text you want to use for the /start command:",
-    reply_markup=InlineKeyboardMarkup([
-    [
-        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
-        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
-    ]
-      ])
-         )
-         return SETTINGS_START_TEXT
+            text="Send the text you want to add or replace.",
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton("Back", callback_data="settings_start"),
+                    InlineKeyboardButton("Close", callback_data="close")
+                ]
+            ])
+        )
+        return SETTINGS_START_TEXT
         
     elif data == "settings_start_image":
         await query.edit_message_text(
-        text="Send the new image you want to use for the /start command:",
-        reply_markup=InlineKeyboardMarkup([
-      [
-         InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
-         InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
-      ]
-])
-)
-return SETTINGS_START_IMAGE
+            text="Send the image you want to add or replace.",
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton("Back", callback_data="settings_start"),
+                    InlineKeyboardButton("Close", callback_data="close")
+                ]
+            ])
+        )
+        return SETTINGS_START_IMAGE
         
     elif data == "settings_start_buttons":
         await settings_start_buttons_callback(update, context)
@@ -654,14 +654,14 @@ return SETTINGS_START_IMAGE
         
     elif data == "settings_start_add_button":
         await query.edit_message_text(
-            text="Send the button text and URL in the format:\nButtonText - URL\n\nFor multiple buttons in the same row, use | separator:\nButtonText1 - URL1 | ButtonText2 - URL2\n\nSpecial buttons:\nBack - callback:back_start\nClose - callback:close",
+            text="Send me new text & link for the button in format:\n\nButtonText1 - URL  \nButtonText1 - URL | ButtonText2 - URL\n\nButtons separated by | appear in the same row.\n\nExample:\nButtonText1 - URL | ButtonText2 - URL → same row\nButtonText3 - URL → new row\n\nSpecial buttons:\nBack - callback:back_start\nClose - callback:close",
             reply_markup=InlineKeyboardMarkup([
-    [
-        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
-        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
-    ]
-])
-)
+                [
+                    InlineKeyboardButton("Back", callback_data="settings_start_buttons"),
+                    InlineKeyboardButton("Close", callback_data="close")
+                ]
+            ])
+        )
         return SETTINGS_START_ADD_BUTTON
         
     elif data == "settings_start_remove_button":
@@ -674,26 +674,26 @@ return SETTINGS_START_IMAGE
         
     elif data == "settings_help_text":
         await query.edit_message_text(
-            text="Send the new text you want to use for the /help command:",
+            text="Send the text you want to add or replace.",
             reply_markup=InlineKeyboardMarkup([
-    [
-        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
-        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
-    ]
-])
- )
+                [
+                    InlineKeyboardButton("Back", callback_data="settings_help"),
+                    InlineKeyboardButton("Close", callback_data="close")
+                ]
+            ])
+        )
         return SETTINGS_HELP_TEXT
         
     elif data == "settings_help_image":
         await query.edit_message_text(
-            text="Send the new image you want to use for the /help command:",
+            text="Send the image you want to add or replace.",
             reply_markup=InlineKeyboardMarkup([
-    [
-        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
-        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
-    ]
-])
-)
+                [
+                    InlineKeyboardButton("Back", callback_data="settings_help"),
+                    InlineKeyboardButton("Close", callback_data="close")
+                ]
+            ])
+        )
         return SETTINGS_HELP_IMAGE
         
     elif data == "settings_help_buttons":
@@ -702,14 +702,14 @@ return SETTINGS_START_IMAGE
         
     elif data == "settings_help_add_button":
         await query.edit_message_text(
-            text="Send the button text and URL in the format:\nButtonText - URL\n\nFor multiple buttons in the same row, use | separator:\nButtonText1 - URL1 | ButtonText2 - URL2\n\nSpecial buttons:\nBack - callback:back_help\nClose - callback:close",
+            text="Send me new text & link for the button in format above.",
             reply_markup=InlineKeyboardMarkup([
-    [
-        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
-        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
-    ]
-])
-)
+                [
+                    InlineKeyboardButton("Back", callback_data="settings_help_buttons"),
+                    InlineKeyboardButton("Close", callback_data="close")
+                ]
+            ])
+        )
         return SETTINGS_HELP_ADD_BUTTON
         
     elif data == "settings_help_remove_button":
@@ -926,8 +926,7 @@ async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TY
         # Inline keyboard for non-admins
         keyboard = [
             [InlineKeyboardButton("Contact Owner", url="https://t.me/Quarel7")],
-            [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="back_start"),
-            [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+            [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="back_start"), InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         help_text = """This bot generates permanent channel links with temporary invites for admins only.
@@ -961,14 +960,14 @@ async def settings_command_callback(update: Update, context: ContextTypes.DEFAUL
         [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    text = "Choose the settings you want to configure:"
-    
+
+    text = "Choose the option you want to change"
+
     if query:
         await query.edit_message_text(text=text, reply_markup=reply_markup)
     else:
         await message.reply_text(text=text, reply_markup=reply_markup)
-    
+
     return SETTINGS_MAIN
 
 async def settings_start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -979,17 +978,19 @@ async def settings_start_callback(update: Update, context: ContextTypes.DEFAULT_
     keyboard = [
         [InlineKeyboardButton("Text", callback_data="settings_start_text")],
         [InlineKeyboardButton("Image", callback_data="settings_start_image")],
-        [InlineKeyboardButton("Buttons", callback_data="settings_start_buttons")],
-        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_main"),
-         InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+        [InlineKeyboardButton("Button", callback_data="settings_start_buttons")],
+        [
+            InlineKeyboardButton("Back", callback_data="settings_main"),
+            InlineKeyboardButton("Close", callback_data="close")
+        ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
+
     await query.edit_message_text(
-        text="Choose the option you want to change for /start command:",
+        text="Choose what you want to change",
         reply_markup=reply_markup
     )
-    
+
     return SETTINGS_START
 
 async def settings_start_buttons_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1000,16 +1001,18 @@ async def settings_start_buttons_callback(update: Update, context: ContextTypes.
     keyboard = [
         [InlineKeyboardButton("Add Button", callback_data="settings_start_add_button")],
         [InlineKeyboardButton("Remove Button", callback_data="settings_start_remove_button")],
-        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
-         InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+        [
+            InlineKeyboardButton("Back", callback_data="settings_start"),
+            InlineKeyboardButton("Close", callback_data="close")
+        ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
+
     await query.edit_message_text(
-        text="Choose the option for button management:",
+        text="Choose the option you want to change",
         reply_markup=reply_markup
     )
-    
+
     return SETTINGS_START_BUTTONS
 
 async def settings_start_remove_button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1044,8 +1047,8 @@ async def settings_start_remove_button_callback(update: Update, context: Context
     
     # Add navigation buttons
     keyboard.append([
-        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
-        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+        InlineKeyboardButton("Back", callback_data="settings_start_buttons"),
+        InlineKeyboardButton("Close", callback_data="close")
     ])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1065,17 +1068,19 @@ async def settings_help_callback(update: Update, context: ContextTypes.DEFAULT_T
     keyboard = [
         [InlineKeyboardButton("Text", callback_data="settings_help_text")],
         [InlineKeyboardButton("Image", callback_data="settings_help_image")],
-        [InlineKeyboardButton("Buttons", callback_data="settings_help_buttons")],
-        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_main"),
-         InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+        [InlineKeyboardButton("Button", callback_data="settings_help_buttons")],
+        [
+            InlineKeyboardButton("Back", callback_data="settings_main"),
+            InlineKeyboardButton("Close", callback_data="close")
+        ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
+
     await query.edit_message_text(
-        text="Choose the option you want to change for /help command:",
+        text="Choose what you want to change",
         reply_markup=reply_markup
     )
-    
+
     return SETTINGS_HELP
 
 async def settings_help_buttons_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1086,16 +1091,18 @@ async def settings_help_buttons_callback(update: Update, context: ContextTypes.D
     keyboard = [
         [InlineKeyboardButton("Add Button", callback_data="settings_help_add_button")],
         [InlineKeyboardButton("Remove Button", callback_data="settings_help_remove_button")],
-        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
-         InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+        [
+            InlineKeyboardButton("Back", callback_data="settings_help"),
+            InlineKeyboardButton("Close", callback_data="close")
+        ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    
+
     await query.edit_message_text(
-        text="Choose the option for button management:",
+        text="Choose the option you want to change",
         reply_markup=reply_markup
     )
-    
+
     return SETTINGS_HELP_BUTTONS
 
 async def settings_help_remove_button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
