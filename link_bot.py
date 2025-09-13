@@ -1933,7 +1933,7 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     for user_id in user_ids:
         try:
-            await context.bot.send_message(user_id, f"{message_text}")
+            await context.bot.send_message(user_id, f"b{message_text}")
             success_count += 1
         except Exception as e:
             logger.error(f"Failed to send broadcast to {user_id}: {e}")
@@ -1968,17 +1968,7 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await asyncio.sleep(2)
             
             await status_msg.edit_text("✦ ʀᴇꜱᴛᴀʀᴛᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟy!")
-            await asyncio.sleep(6)
-            try:
-                await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=status_msg.message_id)
-            except Exception as e:
-                logger.error(f"Failed to delete message: {e}")
-                #Delete /update message if possible
-                try:
-                    await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.effective_message.message_id)
-                    except Exception as e:
-                logger.error(f"Failed to delete message: {e}")
-                
+            await asyncio.sleep(3)
             # Restart the bot
             os.execl(sys.executable, sys.executable, *sys.argv)
         else:
