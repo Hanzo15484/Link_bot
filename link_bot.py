@@ -625,7 +625,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_START
         
     elif data == "settings_start_text":
-await query.edit_message_text(
+        await query.edit_message_text(
     text="Send the new text you want to use for the /start command:",
     reply_markup=InlineKeyboardMarkup([
     [
@@ -2069,6 +2069,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
