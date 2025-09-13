@@ -1893,8 +1893,6 @@ async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         await status_msg.edit_text("✦ ʀᴇꜱᴛᴀʀᴛᴇᴅ ꜱᴜᴄᴄᴇꜱꜰᴜʟʟy!")
         await asyncio.sleep(2)
-    except:
-        pass
     # Save current state
     data = load_data()
     data["restart"] = {
