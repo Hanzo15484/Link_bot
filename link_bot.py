@@ -625,6 +625,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_START
         
     elif data == "settings_start_text":
+        context.user_data['settings_mode'] = 'start_text'
         await query.edit_message_text(
             text="Send the text you want to add or replace.",
             reply_markup=InlineKeyboardMarkup([
@@ -637,6 +638,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_START_TEXT
         
     elif data == "settings_start_image":
+        context.user_data['settings_mode'] = 'start_image'
         await query.edit_message_text(
             text="Send the image you want to add or replace.",
             reply_markup=InlineKeyboardMarkup([
@@ -653,6 +655,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_START_BUTTONS
         
     elif data == "settings_start_add_button":
+        context.user_data['settings_mode'] = 'start_button'
         await query.edit_message_text(
             text="Send me new text & link for the button in format:\n\nButtonText1 - URL  \nButtonText1 - URL | ButtonText2 - URL\n\nButtons separated by | appear in the same row.\n\nExample:\nButtonText1 - URL | ButtonText2 - URL → same row\nButtonText3 - URL → new row\n\nSpecial buttons:\nBack - callback:back_start\nClose - callback:close",
             reply_markup=InlineKeyboardMarkup([
@@ -673,6 +676,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_HELP
         
     elif data == "settings_help_text":
+        context.user_data['settings_mode'] = 'help_text'
         await query.edit_message_text(
             text="Send the text you want to add or replace.",
             reply_markup=InlineKeyboardMarkup([
@@ -685,6 +689,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_HELP_TEXT
         
     elif data == "settings_help_image":
+        context.user_data['settings_mode'] = 'help_image'
         await query.edit_message_text(
             text="Send the image you want to add or replace.",
             reply_markup=InlineKeyboardMarkup([
@@ -701,6 +706,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_HELP_BUTTONS
         
     elif data == "settings_help_add_button":
+        context.user_data['settings_mode'] = 'help_button'
         await query.edit_message_text(
             text="Send me new text & link for the button in format above.",
             reply_markup=InlineKeyboardMarkup([
@@ -1519,7 +1525,11 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        await update.message.reply_text(message, reply_markup=reply_markup)
+        # If this is a callback query, edit the message instead of sending a new one
+        if hasattr(update, 'callback_query') and update.callback_query:
+            await update.callback_query.edit_message_text(message, reply_markup=reply_markup)
+        else:
+            await update.message.reply_text(message, reply_markup=reply_markup)
                 
     except Exception as e:
         logger.error(f"Error listing channels: {e}")
@@ -1534,8 +1544,8 @@ async def list_channels_callback(update: Update, context: ContextTypes.DEFAULT_T
     if data.startswith("list_channels_"):
         page = int(data.split("_")[2])
         context.args = [str(page)]
+        # Call list_channels and pass update as callback_query
         await list_channels(update, context)
-        await query.delete_message()
 
 async def debug_channel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Debug channel permissions."""
@@ -1590,7 +1600,7 @@ async def troubleshoot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Troubleshoot common issues."""
     user_id = update.effective_user.id
     
-    if not is_admin(user_id):
+    if not is_admin(user_id) and not is_owner(user_id):
         await update.message.reply_text("You are not authorized to use this bot.")
         return
     
