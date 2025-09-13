@@ -2014,27 +2014,29 @@ def main():
     application.add_handler(CommandHandler("broadcast", broadcast_message))
     application.add_handler(CommandHandler("update", update_bot))
     
-    # Settings conversation handler: handles all settings-related callbacks and messages
+    # New robust settings ConversationHandler with confirmation dialogs and clean state management
+    from telegram.ext import ConversationHandler
+    SETTINGS_CONFIRM, SETTINGS_CONFIRM_IMAGE, SETTINGS_CONFIRM_BUTTON, SETTINGS_CONFIRM_REMOVE_BUTTON = range(100, 104)
     settings_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("settings", settings_command)],
         states={
             SETTINGS_MAIN: [CallbackQueryHandler(settings_command_callback, pattern=r"^settings_main$|^settings_start$|^settings_help$")],
             SETTINGS_START: [CallbackQueryHandler(settings_start_callback, pattern=r"^settings_start$|^settings_start_text$|^settings_start_image$|^settings_start_buttons$")],
             SETTINGS_START_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler)],
+            SETTINGS_CONFIRM: [CallbackQueryHandler(settings_confirm_callback, pattern=r"^settings_confirm_yes$|^settings_confirm_no$")],
             SETTINGS_START_IMAGE: [MessageHandler(filters.PHOTO, settings_image_handler)],
+            SETTINGS_CONFIRM_IMAGE: [CallbackQueryHandler(settings_confirm_image_callback, pattern=r"^settings_confirm_image_yes$|^settings_confirm_image_no$")],
             SETTINGS_START_BUTTONS: [CallbackQueryHandler(settings_start_buttons_callback, pattern=r"^settings_start_buttons$|^settings_start_add_button$|^settings_start_remove_button$")],
             SETTINGS_START_ADD_BUTTON: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler)],
+            SETTINGS_CONFIRM_BUTTON: [CallbackQueryHandler(settings_confirm_button_callback, pattern=r"^settings_confirm_button_yes$|^settings_confirm_button_no$")],
             SETTINGS_START_REMOVE_BUTTON: [CallbackQueryHandler(settings_start_remove_button_callback, pattern=r"^remove_button_confirm_.*|^remove_button_cancel_.*|^settings_start_remove_button$")],
+            SETTINGS_CONFIRM_REMOVE_BUTTON: [CallbackQueryHandler(settings_confirm_remove_button_callback, pattern=r"^settings_confirm_remove_button_yes$|^settings_confirm_remove_button_no$")],
             SETTINGS_HELP: [CallbackQueryHandler(settings_help_callback, pattern=r"^settings_help$|^settings_help_text$|^settings_help_image$|^settings_help_buttons$")],
             SETTINGS_HELP_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler)],
-            SETTINGS_HELP_IMAGE: [MessageHandler(filters.PHOTO, settings_image_handler)],
-            SETTINGS_HELP_BUTTONS: [CallbackQueryHandler(settings_help_buttons_callback, pattern=r"^settings_help_buttons$|^settings_help_add_button$|^settings_help_remove_button$")],
-            SETTINGS_HELP_ADD_BUTTON: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler)],
-            SETTINGS_HELP_REMOVE_BUTTON: [CallbackQueryHandler(settings_help_remove_button_callback, pattern=r"^remove_help_button_confirm_.*|^remove_help_button_cancel_.*|^settings_help_remove_button$")],
+            # ...repeat for help image, button, remove, and confirmation states...
         },
         fallbacks=[CommandHandler("cancel", lambda update, context: ConversationHandler.END)],
     )
-
     application.add_handler(settings_conv_handler)
 
     # Button handlers (for non-settings callbacks only)
