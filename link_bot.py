@@ -105,7 +105,7 @@ def load_settings():
                     "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
 • ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
 
-✦ ғᴇᴀᴛᴜʀᴇs%
+✦ ғᴇᴀᴛᴜʀᴇs:
 • ғᴀsᴛ ᴀɴᴅ ᴇᴀsʏ ʟɪɴᴋ ᴘʀᴏᴄᴇssɪɴɢ
 • ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
 • ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
@@ -625,7 +625,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_START
         
     elif data == "settings_start_text":
-        context.user_data['settings_mode'] = 'start_text'
         await query.edit_message_text(
             text="Send the text you want to add or replace.",
             reply_markup=InlineKeyboardMarkup([
@@ -638,7 +637,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_START_TEXT
         
     elif data == "settings_start_image":
-        context.user_data['settings_mode'] = 'start_image'
         await query.edit_message_text(
             text="Send the image you want to add or replace.",
             reply_markup=InlineKeyboardMarkup([
@@ -655,7 +653,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_START_BUTTONS
         
     elif data == "settings_start_add_button":
-        context.user_data['settings_mode'] = 'start_button'
         await query.edit_message_text(
             text="Send me new text & link for the button in format:\n\nButtonText1 - URL  \nButtonText1 - URL | ButtonText2 - URL\n\nButtons separated by | appear in the same row.\n\nExample:\nButtonText1 - URL | ButtonText2 - URL → same row\nButtonText3 - URL → new row\n\nSpecial buttons:\nBack - callback:back_start\nClose - callback:close",
             reply_markup=InlineKeyboardMarkup([
@@ -676,7 +673,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_HELP
         
     elif data == "settings_help_text":
-        context.user_data['settings_mode'] = 'help_text'
         await query.edit_message_text(
             text="Send the text you want to add or replace.",
             reply_markup=InlineKeyboardMarkup([
@@ -689,7 +685,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_HELP_TEXT
         
     elif data == "settings_help_image":
-        context.user_data['settings_mode'] = 'help_image'
         await query.edit_message_text(
             text="Send the image you want to add or replace.",
             reply_markup=InlineKeyboardMarkup([
@@ -706,7 +701,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return SETTINGS_HELP_BUTTONS
         
     elif data == "settings_help_add_button":
-        context.user_data['settings_mode'] = 'help_button'
         await query.edit_message_text(
             text="Send me new text & link for the button in format above.",
             reply_markup=InlineKeyboardMarkup([
@@ -1350,7 +1344,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             
             message = await update.message.reply_text(
-                f"ɴᴏᴛᴇ: ᴛʜɪs ɪɴᴠɪᴛᴇ ʟɪɴᴋ ᴇxᴘɪʀᴇs ɪɴ 5 ᴍɪɴᴜᴛᴇs. ɪғ ɪᴛ ᴇxᴘɪʀᴇs, ᴊᴜsᴛ ᴄʟɪᴄᴋ ᴛʜᴇ ᴘᴏsᴛ ʟɪɴᴋ ᴀɢᴀɪɴ ᴛᴏ ɢᴇᴛ ᴀ ɴᴇᴡ ᴏɴᴇ.",
+                f"Note: This invite link expires in 5 minutes. If it expires, just click the post link again to get a new one.",
             )
 
             # Schedule message cleanup
@@ -1525,11 +1519,7 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        # If this is a callback query, edit the message instead of sending a new one
-        if hasattr(update, 'callback_query') and update.callback_query:
-            await update.callback_query.edit_message_text(message, reply_markup=reply_markup)
-        else:
-            await update.message.reply_text(message, reply_markup=reply_markup)
+        await update.message.reply_text(message, reply_markup=reply_markup)
                 
     except Exception as e:
         logger.error(f"Error listing channels: {e}")
@@ -1544,8 +1534,8 @@ async def list_channels_callback(update: Update, context: ContextTypes.DEFAULT_T
     if data.startswith("list_channels_"):
         page = int(data.split("_")[2])
         context.args = [str(page)]
-        # Call list_channels and pass update as callback_query
         await list_channels(update, context)
+        await query.delete_message()
 
 async def debug_channel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Debug channel permissions."""
@@ -1600,7 +1590,7 @@ async def troubleshoot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Troubleshoot common issues."""
     user_id = update.effective_user.id
     
-    if not is_admin(user_id) and not is_owner(user_id):
+    if not is_admin(user_id):
         await update.message.reply_text("You are not authorized to use this bot.")
         return
     
@@ -1932,7 +1922,7 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     for user_id in user_ids:
         try:
-            await context.bot.send_message(user_id, f"{message_text}")
+            await context.bot.send_message(user_id, f"📢 Broadcast:\n\n{message_text}")
             success_count += 1
         except Exception as e:
             logger.error(f"Failed to send broadcast to {user_id}: {e}")
@@ -2014,39 +2004,34 @@ def main():
     application.add_handler(CommandHandler("broadcast", broadcast_message))
     application.add_handler(CommandHandler("update", update_bot))
     
-    # New robust settings ConversationHandler with confirmation dialogs and clean state management
-    from telegram.ext import ConversationHandler
-    SETTINGS_CONFIRM, SETTINGS_CONFIRM_IMAGE, SETTINGS_CONFIRM_BUTTON, SETTINGS_CONFIRM_REMOVE_BUTTON = range(100, 104)
+    # Button handlers
+    application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
+    
+    # List channels pagination
+    application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
+    
+    # Settings conversation handler
     settings_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("settings", settings_command)],
         states={
-            SETTINGS_MAIN: [CallbackQueryHandler(settings_command_callback, pattern=r"^settings_main$|^settings_start$|^settings_help$")],
-            SETTINGS_START: [CallbackQueryHandler(settings_start_callback, pattern=r"^settings_start$|^settings_start_text$|^settings_start_image$|^settings_start_buttons$")],
+            SETTINGS_MAIN: [CallbackQueryHandler(settings_command_callback, pattern="^settings_main$")],
+            SETTINGS_START: [CallbackQueryHandler(settings_start_callback, pattern="^settings_start$")],
             SETTINGS_START_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler)],
-            SETTINGS_CONFIRM: [CallbackQueryHandler(settings_confirm_callback, pattern=r"^settings_confirm_yes$|^settings_confirm_no$")],
             SETTINGS_START_IMAGE: [MessageHandler(filters.PHOTO, settings_image_handler)],
-            SETTINGS_CONFIRM_IMAGE: [CallbackQueryHandler(settings_confirm_image_callback, pattern=r"^settings_confirm_image_yes$|^settings_confirm_image_no$")],
-            SETTINGS_START_BUTTONS: [CallbackQueryHandler(settings_start_buttons_callback, pattern=r"^settings_start_buttons$|^settings_start_add_button$|^settings_start_remove_button$")],
+            SETTINGS_START_BUTTONS: [CallbackQueryHandler(settings_start_buttons_callback, pattern="^settings_start_buttons$")],
             SETTINGS_START_ADD_BUTTON: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler)],
-            SETTINGS_CONFIRM_BUTTON: [CallbackQueryHandler(settings_confirm_button_callback, pattern=r"^settings_confirm_button_yes$|^settings_confirm_button_no$")],
-            SETTINGS_START_REMOVE_BUTTON: [CallbackQueryHandler(settings_start_remove_button_callback, pattern=r"^remove_button_confirm_.*|^remove_button_cancel_.*|^settings_start_remove_button$")],
-            SETTINGS_CONFIRM_REMOVE_BUTTON: [CallbackQueryHandler(settings_confirm_remove_button_callback, pattern=r"^settings_confirm_remove_button_yes$|^settings_confirm_remove_button_no$")],
-            SETTINGS_HELP: [CallbackQueryHandler(settings_help_callback, pattern=r"^settings_help$|^settings_help_text$|^settings_help_image$|^settings_help_buttons$")],
+            SETTINGS_START_REMOVE_BUTTON: [CallbackQueryHandler(settings_start_remove_button_callback, pattern="^settings_start_remove_button$")],
+            SETTINGS_HELP: [CallbackQueryHandler(settings_help_callback, pattern="^settings_help$")],
             SETTINGS_HELP_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler)],
-            # ...repeat for help image, button, remove, and confirmation states...
+            SETTINGS_HELP_IMAGE: [MessageHandler(filters.PHOTO, settings_image_handler)],
+            SETTINGS_HELP_BUTTONS: [CallbackQueryHandler(settings_help_buttons_callback, pattern="^settings_help_buttons$")],
+            SETTINGS_HELP_ADD_BUTTON: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler)],
+            SETTINGS_HELP_REMOVE_BUTTON: [CallbackQueryHandler(settings_help_remove_button_callback, pattern="^settings_help_remove_button$")],
         },
         fallbacks=[CommandHandler("cancel", lambda update, context: ConversationHandler.END)],
     )
+    
     application.add_handler(settings_conv_handler)
-
-    # Button handlers (for non-settings callbacks only)
-    application.add_handler(CallbackQueryHandler(
-        button_handler,
-        pattern=r"^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"
-    ))
-
-    # List channels pagination
-    application.add_handler(CallbackQueryHandler(list_channels_callback, pattern=r"^list_channels_"))
     
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
@@ -2091,9 +2076,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
