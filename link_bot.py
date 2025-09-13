@@ -2014,15 +2014,6 @@ def main():
     application.add_handler(CommandHandler("broadcast", broadcast_message))
     application.add_handler(CommandHandler("update", update_bot))
     
-    # Button handlers (for non-settings callbacks only)
-    application.add_handler(CallbackQueryHandler(
-        button_handler,
-        pattern=r"^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"
-    ))
-
-    # List channels pagination
-    application.add_handler(CallbackQueryHandler(list_channels_callback, pattern=r"^list_channels_"))
-
     # Settings conversation handler: handles all settings-related callbacks and messages
     settings_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("settings", settings_command)],
@@ -2045,6 +2036,15 @@ def main():
     )
 
     application.add_handler(settings_conv_handler)
+
+    # Button handlers (for non-settings callbacks only)
+    application.add_handler(CallbackQueryHandler(
+        button_handler,
+        pattern=r"^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"
+    ))
+
+    # List channels pagination
+    application.add_handler(CallbackQueryHandler(list_channels_callback, pattern=r"^list_channels_"))
     
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
