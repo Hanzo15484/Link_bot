@@ -1959,11 +1959,12 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
             changes = result.stdout.strip()
             if not changes or "Already up to date" in changes:
                 await status_msg.edit_text("✅ ʙᴏᴛ ɪꜱ ᴀʟʀᴇᴀᴅy ᴜᴩ ᴛᴏ ᴅᴀᴛᴇ!")
-                return
-            try:
+                await asyncio.sleep(3)
+                try:
                 await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=status_msg.message_id)
             except Exception as e:
                 logger.error(f"Failed to delete message: {e}")
+                return
             await status_msg.edit_text(f"✅ ᴜᴩᴅᴀᴛᴇᴅ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ!\n\nChanges:\n{changes}")
             await asyncio.sleep(2)
             
