@@ -1933,7 +1933,7 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     for user_id in user_ids:
         try:
-            await context.bot.send_message(user_id, f"{message_text}")
+            await context.bot.send_message(user_id, f"📢 Broadcast:\n\n{message_text}")
             success_count += 1
         except Exception as e:
             logger.error(f"Failed to send broadcast to {user_id}: {e}")
@@ -1958,9 +1958,9 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if result.returncode == 0:
             changes = result.stdout.strip()
             if not changes or "Already up to date" in changes:
-               # Edit the existing message
-            await status_msg.edit_text("✅ ʙᴏᴛ ɪꜱ ᴀʟʀᴇᴀᴅy ᴜᴩ ᴛᴏ ᴅᴀᴛᴇ!")
-            return
+                await status_msg.edit_text("✅ ʙᴏᴛ ɪꜱ ᴀʟʀᴇᴀᴅy ᴜᴩ ᴛᴏ ᴅᴀᴛᴇ!")
+                return
+            
             await status_msg.edit_text(f"✅ ᴜᴩᴅᴀᴛᴇᴅ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ!\n\nChanges:\n{changes}")
             await asyncio.sleep(2)
             
@@ -1976,8 +1976,9 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 #Delete /update message if possible
                 try:
                     await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=update.effective_message.message_id)
-                except:
-                    pass # Ignore if fails
+                    except Exception as e:
+                logger.error(f"Failed to delete message: {e}")
+                
             # Restart the bot
             os.execl(sys.executable, sys.executable, *sys.argv)
         else:
