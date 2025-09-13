@@ -627,28 +627,24 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif data == "settings_start_text":
 await query.edit_message_text(
     text="Send the new text you want to use for the /start command:",
-    reply_markup=InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
-                InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
-            ]
-        ]
-    )
+    reply_markup=InlineKeyboardMarkup([
+    [
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ]
+])
 )
 return SETTINGS_START_TEXT
         
     elif data == "settings_start_image":
         await query.edit_message_text(
     text="Send the new image you want to use for the /start command:",
-    reply_markup=InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
-                InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
-            ]
-        ]
-    )
+    reply_markup=InlineKeyboardMarkup([
+    [
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ]
+])
 )
 return SETTINGS_START_IMAGE
         
@@ -660,10 +656,12 @@ return SETTINGS_START_IMAGE
         await query.edit_message_text(
             text="Send the button text and URL in the format:\nButtonText - URL\n\nFor multiple buttons in the same row, use | separator:\nButtonText1 - URL1 | ButtonText2 - URL2\n\nSpecial buttons:\nBack - callback:back_start\nClose - callback:close",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
-                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
-            ])
-        )
+    [
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ]
+])
+)
         return SETTINGS_START_ADD_BUTTON
         
     elif data == "settings_start_remove_button":
@@ -678,20 +676,24 @@ return SETTINGS_START_IMAGE
         await query.edit_message_text(
             text="Send the new text you want to use for the /help command:",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
-                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
-            ])
-        )
+    [
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ]
+])
+ )
         return SETTINGS_HELP_TEXT
         
     elif data == "settings_help_image":
         await query.edit_message_text(
             text="Send the new image you want to use for the /help command:",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
-                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
-            ])
-        )
+    [
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ]
+])
+)
         return SETTINGS_HELP_IMAGE
         
     elif data == "settings_help_buttons":
@@ -702,10 +704,12 @@ return SETTINGS_START_IMAGE
         await query.edit_message_text(
             text="Send the button text and URL in the format:\nButtonText - URL\n\nFor multiple buttons in the same row, use | separator:\nButtonText1 - URL1 | ButtonText2 - URL2\n\nSpecial buttons:\nBack - callback:back_help\nClose - callback:close",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
-                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
-            ])
-        )
+    [
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ]
+])
+)
         return SETTINGS_HELP_ADD_BUTTON
         
     elif data == "settings_help_remove_button":
@@ -741,10 +745,12 @@ return SETTINGS_START_IMAGE
         await query.edit_message_text(
             text="❌ Error removing button.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
-                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
-            ])
-        )
+    [
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ]
+])
+)
         return SETTINGS_START_BUTTONS
         
     elif data.startswith("remove_help_button_confirm_"):
@@ -766,19 +772,23 @@ return SETTINGS_START_IMAGE
                 await query.edit_message_text(
                     text="✅ Button removed successfully!",
                     reply_markup=InlineKeyboardMarkup([
-                        [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
-                        [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
-                    ])
-                )
+    [
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ]
+])
+)
                 return SETTINGS_HELP_BUTTONS
         
         await query.edit_message_text(
             text="❌ Error removing button.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
-                [InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
-            ])
-        )
+    [
+        InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_help_buttons"),
+        InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")
+    ]
+])
+)
         return SETTINGS_HELP_BUTTONS
         
     # Handle button removal cancellation
@@ -2057,5 +2067,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
