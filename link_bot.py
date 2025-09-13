@@ -1960,7 +1960,6 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if not changes or "Already up to date" in changes:
                 await status_msg.edit_text("✅ ʙᴏᴛ ɪꜱ ᴀʟʀᴇᴀᴅy ᴜᴩ ᴛᴏ ᴅᴀᴛᴇ!")
                 return
-            
             await status_msg.edit_text(f"✅ ᴜᴩᴅᴀᴛᴇᴅ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ!\n\nChanges:\n{changes}")
             await asyncio.sleep(2)
             
