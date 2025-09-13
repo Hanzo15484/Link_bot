@@ -1344,7 +1344,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             
             message = await update.message.reply_text(
-                f"Note: This invite link expires in 5 minutes. If it expires, just click the post link again to get a new one.",
+                f"ɴᴏᴛᴇ: ᴛʜɪs ɪɴᴠɪᴛᴇ ʟɪɴᴋ ᴇxᴘɪʀᴇs ɪɴ 5 ᴍɪɴᴜᴛᴇs. ɪғ ɪᴛ ᴇxᴘɪʀᴇs, ᴊᴜsᴛ ᴄʟɪᴄᴋ ᴛʜᴇ ᴘᴏsᴛ ʟɪɴᴋ ᴀɢᴀɪɴ ᴛᴏ ɢᴇᴛ ᴀ ɴᴇᴡ ᴏɴᴇ.",
             )
 
             # Schedule message cleanup
