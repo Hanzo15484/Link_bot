@@ -2014,29 +2014,32 @@ def main():
     application.add_handler(CommandHandler("broadcast", broadcast_message))
     application.add_handler(CommandHandler("update", update_bot))
     
-    # Button handlers (do NOT include any settings-related patterns)
-    application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
+    # Button handlers (for non-settings callbacks only)
+    application.add_handler(CallbackQueryHandler(
+        button_handler,
+        pattern=r"^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"
+    ))
 
     # List channels pagination
-    application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
+    application.add_handler(CallbackQueryHandler(list_channels_callback, pattern=r"^list_channels_"))
 
-    # Settings conversation handler: allow all settings-related callback queries to keep the conversation active
+    # Settings conversation handler: handles all settings-related callbacks and messages
     settings_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("settings", settings_command)],
         states={
-            SETTINGS_MAIN: [CallbackQueryHandler(settings_command_callback, pattern="^settings_main$|^settings_start$|^settings_start_text$|^settings_start_image$|^settings_start_buttons$|^settings_start_add_button$|^settings_start_remove_button$|^settings_help$|^settings_help_text$|^settings_help_image$|^settings_help_buttons$|^settings_help_add_button$|^settings_help_remove_button$")],
-            SETTINGS_START: [CallbackQueryHandler(settings_start_callback, pattern="^settings_start$|^settings_start_text$|^settings_start_image$|^settings_start_buttons$|^settings_start_add_button$|^settings_start_remove_button$")],
+            SETTINGS_MAIN: [CallbackQueryHandler(settings_command_callback, pattern=r"^settings_main$|^settings_start$|^settings_help$")],
+            SETTINGS_START: [CallbackQueryHandler(settings_start_callback, pattern=r"^settings_start$|^settings_start_text$|^settings_start_image$|^settings_start_buttons$")],
             SETTINGS_START_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler)],
             SETTINGS_START_IMAGE: [MessageHandler(filters.PHOTO, settings_image_handler)],
-            SETTINGS_START_BUTTONS: [CallbackQueryHandler(settings_start_buttons_callback, pattern="^settings_start_buttons$|^settings_start_add_button$|^settings_start_remove_button$")],
+            SETTINGS_START_BUTTONS: [CallbackQueryHandler(settings_start_buttons_callback, pattern=r"^settings_start_buttons$|^settings_start_add_button$|^settings_start_remove_button$")],
             SETTINGS_START_ADD_BUTTON: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler)],
-            SETTINGS_START_REMOVE_BUTTON: [CallbackQueryHandler(settings_start_remove_button_callback, pattern="^settings_start_remove_button$")],
-            SETTINGS_HELP: [CallbackQueryHandler(settings_help_callback, pattern="^settings_help$|^settings_help_text$|^settings_help_image$|^settings_help_buttons$|^settings_help_add_button$|^settings_help_remove_button$")],
+            SETTINGS_START_REMOVE_BUTTON: [CallbackQueryHandler(settings_start_remove_button_callback, pattern=r"^remove_button_confirm_.*|^remove_button_cancel_.*|^settings_start_remove_button$")],
+            SETTINGS_HELP: [CallbackQueryHandler(settings_help_callback, pattern=r"^settings_help$|^settings_help_text$|^settings_help_image$|^settings_help_buttons$")],
             SETTINGS_HELP_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler)],
             SETTINGS_HELP_IMAGE: [MessageHandler(filters.PHOTO, settings_image_handler)],
-            SETTINGS_HELP_BUTTONS: [CallbackQueryHandler(settings_help_buttons_callback, pattern="^settings_help_buttons$|^settings_help_add_button$|^settings_help_remove_button$")],
+            SETTINGS_HELP_BUTTONS: [CallbackQueryHandler(settings_help_buttons_callback, pattern=r"^settings_help_buttons$|^settings_help_add_button$|^settings_help_remove_button$")],
             SETTINGS_HELP_ADD_BUTTON: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler)],
-            SETTINGS_HELP_REMOVE_BUTTON: [CallbackQueryHandler(settings_help_remove_button_callback, pattern="^settings_help_remove_button$")],
+            SETTINGS_HELP_REMOVE_BUTTON: [CallbackQueryHandler(settings_help_remove_button_callback, pattern=r"^remove_help_button_confirm_.*|^remove_help_button_cancel_.*|^settings_help_remove_button$")],
         },
         fallbacks=[CommandHandler("cancel", lambda update, context: ConversationHandler.END)],
     )
