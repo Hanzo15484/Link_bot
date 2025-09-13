@@ -1964,7 +1964,7 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await context.bot.delete_message(chat_id=update.effective_chat.id, message_id=status_msg.message_id)
             except Exception as e:
                 logger.error(f"Failed to delete message: {e}")
-                return
+        else:
             await status_msg.edit_text(f"✅ ᴜᴩᴅᴀᴛᴇᴅ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ!\n\nChanges:\n{changes}")
             await asyncio.sleep(2)
             
