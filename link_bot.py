@@ -1942,7 +1942,24 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"Broadcast completed.\nSuccess: {success_count}\nFailed: {fail_count}"
     )
+#Retrieving Json File of Channel_data
+async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Send the Channel_data.json file (Owner only)."""
+    user_id = update.effective_user.id
+    
+    if user_id != OWNER_ID:
+        await update.message.reply_text("You are not authorized to use this bot.")
+        return
 
+    if os.path.exists(CHANNEL_FILE):
+        await update.message.reply_document(
+            document=open(CHANNEL_FILE, "rb"),
+            filename="Channel_data.json",
+            caption="📂 Here is your Channel data."
+        )
+    else:
+        await update.message.reply_text("⚠️ Channel_data.json file not found!")
+#Update bot from Github
 async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Update the bot from GitHub."""
     if not is_owner(update.effective_user.id):
@@ -2014,7 +2031,7 @@ def main():
     application.add_handler(CommandHandler("restart", restart_bot))
     application.add_handler(CommandHandler("broadcast", broadcast_message))
     application.add_handler(CommandHandler("update", update_bot))
-    
+    application.add_handler(CommandHandler("Channels", Channels))
     # Button handlers
     application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
     
@@ -2086,4 +2103,5 @@ def main():
         logger.info("Bot stopped by user")
 
 if __name__ == '__main__':
+
     main()
