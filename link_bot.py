@@ -1951,10 +1951,10 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You are not authorized to use this bot.")
         return
 
-    if os.path.exists(CHANNEL_FILE):
+    if os.path.exists(JSON_STORAGE):
         await update.message.reply_document(
-            document=open(CHANNEL_FILE, "rb"),
-            filename="Channel_data.json",
+            document=open(JSON_STORAGE, "rb"),
+            filename="channel_data.json",
             caption="📂 Here is your Channel data."
         )
     else:
@@ -2105,6 +2105,7 @@ def main():
 if __name__ == '__main__':
 
     main()
+
 
 
 
