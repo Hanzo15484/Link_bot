@@ -2102,9 +2102,10 @@ def main():
     except KeyboardInterrupt:
         logger.info("Bot stopped by user")
 
-# After all your handlers are added (around line 68 in your code)
 if __name__ == '__main__':
-main()
+    
+    main()
+
 
 
 
