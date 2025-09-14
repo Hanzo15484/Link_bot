@@ -2068,7 +2068,14 @@ def main():
         logger.info("Bot started successfully!")
         await application.initialize()
         await application.start()
-        await application.updater.start_polling()
+        await application.updater.start_polling(
+        timeout=30,
+        drop_pending_updates=True,
+        bootstrap_retries=5,
+        read_timeout=60,
+        write_timeout=60,
+        pool_timeout=60
+ )
         
         # Check if we need to send restart confirmation
         data = load_data()
@@ -2105,6 +2112,7 @@ def main():
 if __name__ == '__main__':
     
     main()
+
 
 
 
