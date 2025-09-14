@@ -2104,29 +2104,8 @@ def main():
 
 # After all your handlers are added (around line 68 in your code)
 if __name__ == '__main__':
-    try:
-        # Configure custom request for better timeout handling
-        custom_request = HTTPXRequest(
-            connection_pool_size=20,
-            read_timeout=60,
-            write_timeout=60,
-            connect_timeout=60,
-            pool_timeout=60
-        )
-        
-        # Rebuild application with custom request if needed
-        # application = Application.builder().token(TOKEN).request(custom_request).build()
-        
-        # Start polling with improved settings
-        await application.run_polling(
-            timeout=30,
-            drop_pending_updates=True,
-            bootstrap_retries=5
-        )
-    except Exception as e:
-        print(f"Bot stopped due to error: {e}")
-        
-   main()
+main()
+
 
 
 
