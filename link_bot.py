@@ -2126,7 +2126,8 @@ if __name__ == '__main__':
     except Exception as e:
         print(f"Bot stopped due to error: {e}")
         
-   asyncio.run(main())
+   main()
+
 
 
 
