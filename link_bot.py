@@ -37,6 +37,12 @@ MESSAGE_CLEANUP_TIME = 3 * 60  # 6 minutes in seconds
 JSON_STORAGE = "channel_data.json"
 SETTINGS_STORAGE = "bot_settings.json"
 
+#Log 
+LOG_FILE = "bot.log"
+
+#image 
+PING_IMAGE = "/data/data/com.termux/files/home/storage/downloads/IMG_20250917_154821.jpg"
+
 # Conversation states
 (
     ABOUT, HELP_REQUIREMENTS, HELP_HOW, HELP_TROUBLESHOOT,
@@ -2105,6 +2111,65 @@ async def button_handler_channels(update: Update, context: ContextTypes.DEFAULT_
         except:
             pass
 
+#Ping 
+async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    msg = await update.message.reply_text("🏓 Pinging bot...")
+    start_time = time.time()
+    await msg.edit_text("🏓 Pinging bot..")
+    end_time = time.time()
+
+    latency = round((end_time - start_time) * 1000, 2)  # ms
+    uptime_sec = int(time.time() - BOT_START_TIME)
+    uptime_str = str(datetime.timedelta(seconds=uptime_sec))
+
+    await msg.delete()
+
+    if os.path.exists(PING_IMAGE):
+        with open(PING_IMAGE, "rb") as f:
+            await update.message.reply_photo(
+                photo=f,
+                caption=f"🏓 Bot is alive!\n⏱️ API Latency: {latency} ms\n⏰ Uptime: {uptime_str}"
+            )
+    else:
+        await update.message.reply_text(
+            f"🏓 Bot is alive!\n⏱️ API Latency: {latency} ms\n⏰ Uptime: {uptime_str}"
+        )
+
+#log file 
+async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id != OWNER_ID:
+        await update.message.reply_text("❌ You are not authorized to use this command.")
+        return
+
+    msg = await update.message.reply_text("📄 Generating log...")
+
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r") as f:
+            lines = f.readlines()
+
+        log_content = ""
+        for line in lines:
+            if "ERROR" in line or "Exception" in line:
+                log_content += f"❌ {line}"
+            else:
+                log_content += line
+
+        with open("log.txt", "w") as f:
+            f.write(log_content)
+
+        await msg.delete()
+
+        # Send log.txt as document only (no image)
+        with open("log.txt", "rb") as f_doc:
+            await update.message.reply_document(
+                document=f_doc,
+                filename="log.txt",
+                caption="📄 Log file"
+            )
+    else:
+        await msg.edit_text("⚠️ Log file not found!")
+
 #main
 def main():
     """Start the bot."""
@@ -2143,6 +2208,8 @@ def main():
     application.add_handler(CommandHandler("broadcast", broadcast_message))
     application.add_handler(CommandHandler("update", update_bot))
     application.add_handler(CommandHandler("channels", channels))
+    application.add_handler(CommandHandler("ping", ping))
+    application.addhandler(CommandHandler("log", get_log))
     # Button handlers
     application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
 
@@ -2219,6 +2286,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
