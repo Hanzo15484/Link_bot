@@ -2029,7 +2029,7 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # Handle button clicks
-async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def button_handler_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()  # Acknowledge the button click
 
@@ -2173,6 +2173,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
