@@ -36,6 +36,7 @@ MESSAGE_CLEANUP_TIME = 3 * 60  # 6 minutes in seconds
 # JSON storage file
 JSON_STORAGE = "channel_data.json"
 SETTINGS_STORAGE = "bot_settings.json"
+CHANNEL_DATA = "Channel_data.json"
 
 # Conversation states
 (
@@ -2008,6 +2009,57 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await status_msg.edit_text(f"❌ ᴇʀʀᴏʀ ᴜᴩᴅᴀᴛɪɴɢ: {str(e)}")
 
+#Channels_data
+async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Show inline buttons for Channels or Bot Settings (Owner only)."""
+    user_id = update.effective_user.id
+
+    if user_id != OWNER_ID:
+        await update.message.reply_text("❌ You are not authorized to use this bot.")
+        return
+
+    keyboard = [
+        [
+            InlineKeyboardButton("📂 Channels", callback_data="get_channels"),
+            InlineKeyboardButton("⚙️ Bot Settings", callback_data="get_settings"),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_text("Choose the file you want:", reply_markup=reply_markup)
+
+
+# Handle button clicks
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()  # Acknowledge the button click
+
+    user_id = query.from_user.id
+    if user_id != OWNER_ID:
+        await query.edit_message_text("❌ You are not authorized to use this bot.")
+        return
+
+    if query.data == "get_channels":
+        if os.path.exists(CHANNEL_DATA):
+            with open(CHANNEL_DATA, "rb") as file:
+                await query.message.reply_document(
+                    document=file,
+                    filename="Channel_data.json",
+                    caption="📂 Here is your Channel data."
+                )
+        else:
+            await query.message.reply_text("⚠️ Channel_data.json file not found!")
+
+    elif query.data == "get_settings":
+        if os.path.exists(SETTINGS_STORAGE):
+            with open(SETTINGS_STORAGE, "rb") as file:
+                await query.message.reply_document(
+                    document=file,
+                    filename="bot_settings.json",
+                    caption="⚙️ Here is your Bot Settings."
+                )
+        else:
+            await query.message.reply_text("⚠️ bot_Setting.json file not found!")
 # Main Application
 def main():
     """Start the bot."""
@@ -2045,10 +2097,13 @@ def main():
     application.add_handler(CommandHandler("restart", restart_bot))
     application.add_handler(CommandHandler("broadcast", broadcast_message))
     application.add_handler(CommandHandler("update", update_bot))
-    
+    application.add_handler(CommandHandler("channels", channels))
     # Button handlers
     application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
-    
+
+    # Add new handler for /channels inline buttons
+    application.add_handler(CallbackQueryHandler(button_handler, pattern="^(get_channels|get_settings)$"))
+
     # List channels pagination
     application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
     
@@ -2119,6 +2174,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
