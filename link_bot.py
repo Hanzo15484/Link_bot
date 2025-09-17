@@ -2008,10 +2008,9 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await status_msg.edit_text(f"❌ ᴇʀʀᴏʀ ᴜᴩᴅᴀᴛɪɴɢ: {str(e)}")
 
-# Main /channels command
+# /channels command
 async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
-
     if user_id != OWNER_ID:
         await update.message.reply_text("❌ You are not authorized to use this bot.")
         return
@@ -2024,18 +2023,22 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
-    await update.message.reply_text("Choose the file you want:", reply_markup=reply_markup)
+    # Send the main menu and store its message ID in user_data
+    menu_message = await update.message.reply_text("Choose the file you want:", reply_markup=reply_markup)
+    context.user_data["menu_message_id"] = menu_message.message_id
 
 
-# Handler for /channels buttons
+# Channels button handler
 async def button_handler_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()  # Acknowledge button click
-
+    await query.answer()
     user_id = query.from_user.id
+
     if user_id != OWNER_ID:
         await query.edit_message_text("❌ You are not authorized to use this bot.")
         return
+
+    menu_message_id = context.user_data.get("menu_message_id")
 
     # Main menu keyboard
     main_menu = InlineKeyboardMarkup(
@@ -2054,9 +2057,13 @@ async def button_handler_channels(update: Update, context: ContextTypes.DEFAULT_
     )
 
     if query.data == "get_channels":
+        # Delete previous document message (if any)
+        try:
+            await query.message.delete()
+        except:
+            pass
         if os.path.exists(JSON_STORAGE):
             with open(JSON_STORAGE, "rb") as file:
-                # Edit the message to document
                 await query.message.reply_document(
                     document=file,
                     filename="Channel_data.json",
@@ -2064,9 +2071,13 @@ async def button_handler_channels(update: Update, context: ContextTypes.DEFAULT_
                     reply_markup=back_close_keyboard
                 )
         else:
-            await query.edit_message_text("⚠️ Channel_data.json file not found!", reply_markup=main_menu)
+            await query.message.reply_text("⚠️ Channel_data.json file not found!", reply_markup=main_menu)
 
     elif query.data == "get_settings":
+        try:
+            await query.message.delete()
+        except:
+            pass
         if os.path.exists(SETTINGS_STORAGE):
             with open(SETTINGS_STORAGE, "rb") as file:
                 await query.message.reply_document(
@@ -2076,13 +2087,23 @@ async def button_handler_channels(update: Update, context: ContextTypes.DEFAULT_
                     reply_markup=back_close_keyboard
                 )
         else:
-            await query.edit_message_text("⚠️ Bot_Setting.json file not found!", reply_markup=main_menu)
+            await query.message.reply_text("⚠️ Bot_Setting.json file not found!", reply_markup=main_menu)
 
     elif query.data == "back_channels":
-        await query.edit_message_text("Choose the file you want:", reply_markup=main_menu)
+        # Delete current document message first
+        try:
+            await query.message.delete()
+        except:
+            pass
+        # Send main menu again
+        menu_message = await query.message.chat.send_message("Choose the file you want:", reply_markup=main_menu)
+        context.user_data["menu_message_id"] = menu_message.message_id
 
     elif query.data == "close_channels":
-        await query.message.delete()
+        try:
+            await query.message.delete()
+        except:
+            pass
 
 #main
 def main():
@@ -2198,6 +2219,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
