@@ -77,7 +77,34 @@ def is_admin(user_id):
 def is_owner(user_id):
     """Check if user is the owner."""
     return user_id == OWNER_ID
+#temporary start message 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # React ❤️ to user's command
+    try:
+        await update.message.set_reaction("❤️")
+    except Exception:
+        pass  # ignore if reaction not supported
 
+    # Step 1: Send initial "starting"
+    msg = await update.message.reply_text("sᴛᴀʀᴛɪɴɢ ᴛʜᴇ ʙᴏᴛ....")
+
+    # Step 2: Countdown edits
+    for i in range(3, 0, -1):
+        await asyncio.sleep(1)
+        await msg.edit_text(f"sᴛᴀʀᴛɪɴɢ ᴛʜᴇ ʙᴏᴛ ɪɴ {i} sᴇᴄᴏɴᴅs....")
+
+    # Step 3: Show "Bot started"
+    await asyncio.sleep(1)
+    await msg.edit_text("✅ ʙᴏᴛ sᴛᴀʀᴛᴇᴅ")
+
+    # Step 4: Delete the startup animation message
+    await asyncio.sleep(1)
+    try:
+        await msg.delete()
+    except Exception:
+        pass
+
+#load data
 async def load_data():
     """Load data from JSON file asynchronously."""
     if os.path.exists(JSON_STORAGE):
@@ -2296,6 +2323,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
