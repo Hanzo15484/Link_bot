@@ -2135,7 +2135,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Send final message with image
     await context.bot.send_photo(
         chat_id=update.effective_chat.id,
-        photo="/data/data/com.termux/files/home/storage/downloads/IMG_20250917_154821.jpg",
+        photo="/data/data/com.termux/files/home/storage/downloads/IMG_20250917_181004.jpg",
         caption=(
             f"✅ **Pong!**\n"
             f"📡 Latency: `{latency_ms} ms`\n"
@@ -2295,6 +2295,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
