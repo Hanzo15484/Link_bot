@@ -2008,9 +2008,8 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await status_msg.edit_text(f"❌ ᴇʀʀᴏʀ ᴜᴩᴅᴀᴛɪɴɢ: {str(e)}")
 
-#Channels_data
+# Main /channels command
 async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Show inline buttons for Channels or Bot Settings (Owner only)."""
     user_id = update.effective_user.id
 
     if user_id != OWNER_ID:
@@ -2028,38 +2027,64 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Choose the file you want:", reply_markup=reply_markup)
 
 
-# Handle button clicks
+# Handler for /channels buttons
 async def button_handler_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()  # Acknowledge the button click
+    await query.answer()  # Acknowledge button click
 
     user_id = query.from_user.id
     if user_id != OWNER_ID:
         await query.edit_message_text("❌ You are not authorized to use this bot.")
         return
 
+    # Main menu keyboard
+    main_menu = InlineKeyboardMarkup(
+        [[
+            InlineKeyboardButton("📂 Channels", callback_data="get_channels"),
+            InlineKeyboardButton("⚙️ Bot Settings", callback_data="get_settings")
+        ]]
+    )
+
+    # Back + Close keyboard
+    back_close_keyboard = InlineKeyboardMarkup(
+        [[
+            InlineKeyboardButton("🔙 Back", callback_data="back_channels"),
+            InlineKeyboardButton("❌ Close", callback_data="close_channels")
+        ]]
+    )
+
     if query.data == "get_channels":
         if os.path.exists(JSON_STORAGE):
             with open(JSON_STORAGE, "rb") as file:
+                # Edit the message to document
                 await query.message.reply_document(
                     document=file,
-                    filename="channel_data.json",
-                    caption="📂 Here is your Channel data."
+                    filename="Channel_data.json",
+                    caption="📂 Here is your Channel data.",
+                    reply_markup=back_close_keyboard
                 )
         else:
-            await query.message.reply_text("⚠️ Channel_data.json file not found!")
+            await query.edit_message_text("⚠️ Channel_data.json file not found!", reply_markup=main_menu)
 
     elif query.data == "get_settings":
         if os.path.exists(SETTINGS_STORAGE):
             with open(SETTINGS_STORAGE, "rb") as file:
                 await query.message.reply_document(
                     document=file,
-                    filename="bot_settings.json",
-                    caption="⚙️ Here is your Bot Settings."
+                    filename="Bot_Setting.json",
+                    caption="⚙️ Here is your Bot Settings.",
+                    reply_markup=back_close_keyboard
                 )
         else:
-            await query.message.reply_text("⚠️ bot_Setting.json file not found!")
-# Main Application
+            await query.edit_message_text("⚠️ Bot_Setting.json file not found!", reply_markup=main_menu)
+
+    elif query.data == "back_channels":
+        await query.edit_message_text("Choose the file you want:", reply_markup=main_menu)
+
+    elif query.data == "close_channels":
+        await query.message.delete()
+
+#main
 def main():
     """Start the bot."""
     # Load admin IDs from data file for persistence
@@ -2101,7 +2126,7 @@ def main():
     application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
 
     #Channels Button Handlers 
-    application.add_handler(CallbackQueryHandler(button_handler_channels, pattern="^(get_channels|get_settings)$"))
+    application.add_handler(CallbackQueryHandler(button_handler_channels, pattern="^(get_channels|get_settings|back_channels|close_channels)$"))
     
     # List channels pagination
     application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
@@ -2173,6 +2198,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
