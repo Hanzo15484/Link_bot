@@ -2135,7 +2135,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Send final message with image
     await context.bot.send_photo(
         chat_id=update.effective_chat.id,
-        photo="https://i.ibb.co/H632LCF/IMG-20250917-154821.jpg",
+        document="https://i.ibb.co/H632LCF/IMG-20250917-154821.jpg",
         caption=(
             f"✅ **Pong!**\n"
             f"📡 Latency: `{latency_ms} ms`\n"
@@ -2295,6 +2295,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
