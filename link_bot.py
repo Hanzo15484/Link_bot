@@ -26,6 +26,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+#Bot start time
+BOT_START_TIME = time.time()
+
 # Configuration
 BOT_TOKEN = "7965411711:AAHcFqZYLiNE6bvmBE2iQB_CYBWxME4PuKs"
 OWNER_ID = 5373577888
@@ -2287,6 +2290,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
