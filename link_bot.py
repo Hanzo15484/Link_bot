@@ -218,7 +218,8 @@ async def load_settings():
 • /unban – ᴜɴʙᴀɴ ᴀ ᴜsᴇʀ  
 • /restart – ʀᴇsᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ  
 • /broadcast – sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs  
-• /update - ᴜᴘᴅᴀᴛᴇ ʙᴏᴛ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ""",
+• /update - ᴜᴘᴅᴀᴛᴇ ʙᴏᴛ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ
+• /settings - ᴄᴏɴꜰɪɢᴜʀᴇ ʙᴏt ꜱᴇᴛᴛɪɴɢꜱ""",
             "image": "photo_2025-08-31_23-16-44.jpg",
             "buttons": [
                 [
@@ -2295,6 +2296,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
