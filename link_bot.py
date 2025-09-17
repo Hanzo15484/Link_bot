@@ -611,7 +611,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(
             text=troubleshoot_text,
             reply_markup=reply_markup,
-            parse_mode="Markdown"
+            parse_mode=None
         )
         return HELP_TROUBLESHOOT
         
@@ -2119,4 +2119,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
