@@ -122,7 +122,7 @@ async def load_settings():
 • ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
 • ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
 ✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʀ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
-                    "image": "photo_2025-08-31_23-17-37.jpg",
+                    "image": "/data/data/com.termux/files/home/storage/downloads/start_img.jpg",
                     "buttons": [
                         [{"text": "ᴀʙᴏᴜᴛ", "url": "callback:about"}],
                         [{"text": "ᴄʟᴏsᴇ", "url": "callback:close"}]
@@ -2219,6 +2219,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
