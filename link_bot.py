@@ -17,6 +17,7 @@ import sys
 import subprocess
 import requests
 from io import BytesIO
+import aiofiles
 
 # Enable logging
 logging.basicConfig(
@@ -44,10 +45,6 @@ SETTINGS_STORAGE = "bot_settings.json"
     SETTINGS_HELP, SETTINGS_HELP_TEXT, SETTINGS_HELP_IMAGE,
     SETTINGS_HELP_BUTTONS, SETTINGS_HELP_ADD_BUTTON, SETTINGS_HELP_REMOVE_BUTTON
 ) = range(17)
-
-# Image paths (will be managed through settings)
-START_IMAGE = None
-HELP_IMAGE = "photo_2025-08-31_23-16-44.jpg"
 
 # Pagination
 LIST_CHANNELS_PAGE_SIZE = 10
@@ -78,28 +75,43 @@ def is_owner(user_id):
     """Check if user is the owner."""
     return user_id == OWNER_ID
 
-def load_data():
-    """Load data from JSON file."""
+async def load_data():
+    """Load data from JSON file asynchronously."""
     if os.path.exists(JSON_STORAGE):
         try:
-            with open(JSON_STORAGE, 'r') as f:
-                return json.load(f)
-        except:
-            return {"channels": {}, "links": {}, "users": {}, "admins": []}
-    return {"channels": {}, "links": {}, "users": {}, "admins": []}
+            async with aiofiles.open(JSON_STORAGE, 'r', encoding='utf-8') as f:
+                content = await f.read()
+                data = json.loads(content)
+                # Ensure all required keys exist
+                if "admins" not in data:
+                    data["admins"] = ADMIN_IDS.copy()
+                if "banned_users" not in data:
+                    data["banned_users"] = []
+                if "users" not in data:
+                    data["users"] = {}
+                return data
+        except Exception as e:
+            logger.error(f"Error loading data: {e}")
+            return {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
+    return {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
 
-def save_data(data):
-    """Save data to JSON file."""
-    with open(JSON_STORAGE, 'w') as f:
-        json.dump(data, f, indent=2)
+async def save_data(data):
+    """Save data to JSON file asynchronously."""
+    try:
+        async with aiofiles.open(JSON_STORAGE, 'w', encoding='utf-8') as f:
+            await f.write(json.dumps(data, indent=2, ensure_ascii=False))
+    except Exception as e:
+        logger.error(f"Error saving data: {e}")
 
-def load_settings():
-    """Load settings from JSON file."""
+async def load_settings():
+    """Load settings from JSON file asynchronously."""
     if os.path.exists(SETTINGS_STORAGE):
         try:
-            with open(SETTINGS_STORAGE, 'r') as f:
-                return json.load(f)
-        except:
+            async with aiofiles.open(SETTINGS_STORAGE, 'r', encoding='utf-8') as f:
+                content = await f.read()
+                return json.loads(content)
+        except Exception as e:
+            logger.error(f"Error loading settings: {e}")
             return {
                 "start": {
                     "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
@@ -109,8 +121,8 @@ def load_settings():
 • ғᴀsᴛ ᴀɴᴅ ᴇᴀsʏ ʟɪɴᴋ ᴘʀᴏᴄᴇssɪɴɢ
 • ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
 • ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
-✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʏ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
-                    "image": None,
+✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʀ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
+                    "image": "photo_2025-08-31_23-17-37.jpg",
                     "buttons": [
                         [{"text": "ᴀʙᴏᴜᴛ", "url": "callback:about"}],
                         [{"text": "ᴄʟᴏsᴇ", "url": "callback:close"}]
@@ -123,9 +135,10 @@ def load_settings():
 • /start – sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ᴀɴᴅ ᴠɪᴇᴡ ᴡᴇʟᴄᴏᴍᴇ ᴍᴇssᴀɢᴇ  
 • /help – sʜᴏᴡ ᴛʜɪs ʜᴇʟᴘ ɢᴜɪᴅᴇ   
 • /id – ɢᴇᴛ ʏᴏᴜʀ ɪᴅ
+• /settings - ᴄᴏɴꜰɪɢᴜʀᴇ ʙᴏᴛ ꜱᴇᴛᴛɪɴɢꜱ
 
 ┌─ ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅs ─┐
-• /gen_link <channel_link/id> – ɢᴇɴᴇʀᴀᴛᴇ ᴀ ᴘᴇʀᴍᴀɴᴇɴᴛ ʙᴏᴛ ʟɪɴᴋ ᴡɪᴛʜ ᴀ 5-ᴍɪɴᴜᴛᴇ ᴛᴇᴍᴘᴏʀᴀʀʏ ɪɴᴠɪᴛᴇ  
+• /gen_link <channel_link/id> – ɢᴇɴᴇʀᴀᴛᴇ ᴀ ᴘᴇʀᴝᴀɴᴇɴᴛ ʙᴏᴛ ʟɪɴᴋ ᴡɪᴛʜ ᴀ 5-ᴍɪɴᴜᴛᴇ ᴛᴇᴍᴘᴏʀᴀʀʏ ɪɴᴠɪᴛᴇ  
 • /batch_link – ɢᴇɴᴇʀᴀᴛᴇ ʟɪɴᴋs ꜰᴏʀ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴡʜᴇʀᴇ ᴛʜᴇ ʙᴏᴛ ɪs ᴀɴ ᴀᴅᴍɪɴ 
 • /debug <channel_link/id> – ᴄʜᴇᴄᴋ ᴀɴᴅ ᴅᴇʙᴜɢ ᴄʜᴀɴɴᴇʟ ᴘᴇʀᴍɪssɪᴏɴs
 • /list_channels – ʟɪsᴛ ᴀʟʟ ᴀᴄᴛɪᴠᴇ ᴄʜᴀɴɴᴇʟs ᴄᴏɴɴᴇᴄᴛᴇᴅ ᴛᴏ ᴛʜᴇ ʙᴏᴛ  
@@ -141,9 +154,8 @@ def load_settings():
 • /ban – ʙᴀɴ ᴀ ᴜsᴇʀ ꜰʀᴏᴍ ᴜsɪɴɢ ᴛʜᴇ ʙᴏᴛ  
 • /unban – ᴜɴʙᴀɴ ᴀ ᴜsᴇʀ  
 • /restart – ʀᴇsᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ  
-• /broadcast – sᴇɴᴅ ᴀ ᴍᴇssᴀᴢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs  
-• /update - ᴜᴘᴅᴀᴛᴇ ʙᴏᴛ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ
-• /settings - ᴄᴏɴꜰɪɢᴜʀᴇ ʙᴏᴛ ꜱᴇᴛᴛɪɴɢꜱ""",
+• /broadcast – sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs  
+• /update - ᴜᴘᴅᴀᴛᴇ ʙᴏᴛ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ""",
                     "image": "photo_2025-08-31_23-16-44.jpg",
                     "buttons": [
                         [
@@ -163,14 +175,14 @@ def load_settings():
     return {
         "start": {
             "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
-• ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs �ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
+• ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
 
 ✦ ғᴇᴀᴛᴜʀᴇs:
 • ғᴀsᴛ ᴀɴᴅ ᴇᴀsʏ ʟɪɴᴋ ᴘʀᴏᴄᴇssɪɴɢ
 • ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
 • ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
 ✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʏ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
-            "image": None,
+            "image": "photo_2025-08-31_23-17-37.jpg",
             "buttons": [
                 [{"text": "ᴀʙᴏᴜᴛ", "url": "callback:about"}],
                 [{"text": "ᴄʟᴏsᴇ", "url": "callback:close"}]
@@ -180,12 +192,13 @@ def load_settings():
             "text": """✦ ʙᴏᴛ ʜᴇʟᴘ ɢᴜɪᴅᴇ
 
 ┌─ ᴜsᴇʀ ᴄᴏᴍᴍᴀɴᴅs ─┐
-• /start – sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ᴀɴᴅ ᴠɪᴇᴡ ᴡᴇʜᴄᴏᴍᴇ ᴍᴇssᴀɢᴇ  
+• /start – sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ ᴀɴᴅ ᴠɪᴇᴡ ᴡᴇʟᴄᴏᴍᴇ ᴍᴇssᴀɢᴇ  
 • /help – sʜᴏᴡ ᴛʜɪs ʜᴇʟᴘ ɢᴜɪᴅᴇ   
 • /id – ɢᴇᴛ ʏᴏᴜʀ ɪᴅ
+• /settings - ᴄᴏɴꜰɪɢᴜʀᴇ ʙᴏ�t ꜱᴇᴛᴛɪɴɢꜱ
 
 ┌─ ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅs ─┐
-• /gen_link <channel_link/id> – ɢᴇɴᴇʀᴀᴛᴇ ᴀ ᴘᴇʀᴍᴀɴᴇɴᴛ ʙᴏᴛ ʟɪɴᴋ �ᴡɪᴛʜ ᴀ 5-ᴍɪɴᴜᴛᴇ ᴛᴇᴍᴘᴏʀᴀʀʏ ɪɴᴠɪᴛᴇ  
+• /gen_link <channel_link/id> – ɢᴇɴᴇʀᴀᴛᴇ ᴀ ᴘᴇʀᴍᴀɴᴇɴᴛ ʙᴏᴛ ʟɪɴᴋ ᴡɪᴛʜ ᴀ 5-ᴍɪɴᴜᴛᴇ ᴛᴇᴍᴘᴏʀᴀʀʏ ɪɴᴠɪᴛᴇ  
 • /batch_link – ɢᴇɴᴇʀᴀᴛᴇ ʟɪɴᴋs ꜰᴏʀ ᴀʟʟ ᴄʜᴀɴɴᴇʟs ᴡʜᴇʀᴇ ᴛʜᴇ ʙᴏᴛ ɪs ᴀɴ ᴀᴅᴍɪɴ 
 • /debug <channel_link/id> – ᴄʜᴇᴄᴋ ᴀɴᴅ ᴅᴇʙᴜɢ ᴄʜᴀɴɴᴇʟ ᴘᴇʀᴍɪssɪᴏɴs
 • /list_channels – ʟɪsᴛ ᴀʟʟ ᴀᴄᴛɪᴠᴇ ᴄʜᴀɴɴᴇʟs ᴄᴏɴɴᴇᴄᴛᴇᴅ ᴛᴏ ᴛʜᴇ ʙᴏᴛ  
@@ -194,16 +207,15 @@ def load_settings():
 • /users - ꜱʜᴏᴡ ᴜꜱᴇʀ ꜱᴛᴀᴛꜱ
 
 ┌─ ᴏᴡɴᴇʀ ᴄᴏᴍᴍᴀɴᴅs ─┐
-• /auth – ᴀᴜᴛʜᴏʀɪᴢᴇ ᴀ ᴜsᴇʀ ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ᴛᴏ ʟɪᴍɪᴛᴇᴅ ᴄᴏᴍᴍᴀɴᴅs  
+• /auth – ᴀᴜᴛʜᴏʀɪᴢᴇ ᴀ ᴜsᴇʀ ᴡɪᴛʜ ᴛᴇᴜᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ᴛᴏ ʟɪᴍɪᴛᴇᴅ ᴄᴏᴍᴍᴀɴᴅs  
 • /deauth – ʀᴇᴍᴏᴠᴇ ᴀᴜᴛʜᴏʀɪᴢᴀᴛɪᴏɴ ꜰʀᴏᴍ ᴀ ᴜsᴇʀ  
 • /promote – ᴘʀᴏᴍᴏᴛᴇ ᴀ ᴜsᴇʀ ᴛᴏ ᴀᴅᴍɪɴ ᴡɪᴛʜ ꜰᴜʟʟ ʙᴏᴛ ᴀᴄᴄᴇss (ᴇxᴄᴇᴘᴛ ᴏᴡɴᴇʀ-ᴏɴʟʏ ᴄᴏᴍᴍᴀɴᴅs)  
-• /demote – ʀᴇᴠᴏᴋᴇ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ꜰʀᴏᴍ ᴀ �ᴜsᴇʀ  
-• /ban – ʙᴀɴ ᴀ �ᴜsᴇʀ ꜰʀᴏᴍ ᴜsɪɴɢ ᴛʜᴇ ʙᴏᴛ  
+• /demote – ʀᴇᴠᴏᴋᴇ ᴀᴅᴍɪɴ ʀɪɢʜᴛs ꜰʀᴏᴍ ᴀ ᴜsᴇʀ  
+• /ban – ʙᴀɴ ᴀ ᴜsᴇʀ ꜰʀᴏᴍ ᴜsɪɴɢ ᴛʜᴇ ʙᴏᴛ  
 • /unban – ᴜɴʙᴀɴ ᴀ ᴜsᴇʀ  
 • /restart – ʀᴇsᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ  
 • /broadcast – sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs  
-• /update - ᴜᴘᴅᴀᴛᴇ ʙᴏᴛ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ
-• /settings - ᴄᴏɴꜰɪɢᴜʀᴇ ʙᴏᴛ ꜱᴇᴛᴛɪɴɢꜱ""",
+• /update - ᴜᴘᴅᴀᴛᴇ ʙᴏᴛ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ""",
             "image": "photo_2025-08-31_23-16-44.jpg",
             "buttons": [
                 [
@@ -221,10 +233,13 @@ def load_settings():
         }
     }
 
-def save_settings(settings):
-    """Save settings to JSON file."""
-    with open(SETTINGS_STORAGE, 'w') as f:
-        json.dump(settings, f, indent=2)
+async def save_settings(settings):
+    """Save settings to JSON file asynchronously."""
+    try:
+        async with aiofiles.open(SETTINGS_STORAGE, 'w', encoding='utf-8') as f:
+            await f.write(json.dumps(settings, indent=2, ensure_ascii=False))
+    except Exception as e:
+        logger.error(f"Error saving settings: {e}")
 
 async def cleanup_message(context, chat_id, message_id):
     """Clean up message after timeout."""
@@ -379,7 +394,7 @@ async def generate_single_link(update, context, channel_input):
             return
         
         # Store the link information in JSON
-        data = load_data()
+        data = await load_data()
         
         # Store channel info
         if channel_id not in data["channels"]:
@@ -398,7 +413,7 @@ async def generate_single_link(update, context, channel_input):
             "created_at": datetime.utcnow().isoformat()
         }
         
-        save_data(data)
+        await save_data(data)
         
         # Generate the bot link (this will be permanent)
         bot_username = (await context.bot.get_me()).username
@@ -434,7 +449,7 @@ async def regenerate_channel_link(context, channel_id, channel_name, file_id):
         )
         
         # Update JSON data
-        data = load_data()
+        data = await load_data()
         
         if file_id in data["links"]:
             # Revoke old invite link
@@ -454,7 +469,7 @@ async def regenerate_channel_link(context, channel_id, channel_name, file_id):
                 "created_at": datetime.utcnow().isoformat()
             }
             
-            save_data(data)
+            await save_data(data)
             logger.info(f"✅ Auto-regenerated link for {channel_name}")
             
             # Schedule next regeneration
@@ -465,7 +480,7 @@ async def regenerate_channel_link(context, channel_id, channel_name, file_id):
 
 async def get_active_link(file_id):
     """Get active link for a file_id, regenerating if expired."""
-    data = load_data()
+    data = await load_data()
     
     if file_id not in data["links"]:
         return None
@@ -725,7 +740,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Handle button removal confirmation
     elif data.startswith("remove_button_confirm_"):
         button_index = int(data.split("_")[-1])
-        settings = load_settings()
+        settings = await load_settings()
         
         # Remove the button
         row_idx = button_index // 10
@@ -738,7 +753,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 # Remove empty rows
                 settings["start"]["buttons"] = [row for row in settings["start"]["buttons"] if row]
                 
-                save_settings(settings)
+                await save_settings(settings)
                 await query.edit_message_text(
                     text="✅ Button removed successfully!",
                     reply_markup=InlineKeyboardMarkup([
@@ -763,7 +778,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     elif data.startswith("remove_help_button_confirm_"):
         button_index = int(data.split("_")[-1])
-        settings = load_settings()
+        settings = await load_settings()
         
         # Remove the button
         row_idx = button_index // 10
@@ -776,7 +791,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 # Remove empty rows
                 settings["help"]["buttons"] = [row for row in settings["help"]["buttons"] if row]
                 
-                save_settings(settings)
+                await save_settings(settings)
                 await query.edit_message_text(
                     text="✅ Button removed successfully!",
                     reply_markup=InlineKeyboardMarkup([
@@ -819,7 +834,7 @@ async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         message = update.message
     
-    settings = load_settings()
+    settings = await load_settings()
     start_settings = settings["start"]
     
     # Create inline keyboard from settings
@@ -885,7 +900,7 @@ async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TY
         message = update.message
     
     user_id = update.effective_user.id
-    settings = load_settings()
+    settings = await load_settings()
     help_settings = settings["help"]
     
     if is_admin(user_id):
@@ -1026,7 +1041,7 @@ async def settings_start_remove_button_callback(update: Update, context: Context
     query = update.callback_query
     await query.answer()
     
-    settings = load_settings()
+    settings = await load_settings()
     buttons = settings["start"]["buttons"]
     
     if not buttons:
@@ -1116,7 +1131,7 @@ async def settings_help_remove_button_callback(update: Update, context: ContextT
     query = update.callback_query
     await query.answer()
     
-    settings = load_settings()
+    settings = await load_settings()
     buttons = settings["help"]["buttons"]
     
     if not buttons:
@@ -1162,7 +1177,7 @@ async def settings_text_handler(update: Update, context: ContextTypes.DEFAULT_TY
     if not is_owner(user_id):
         return
     
-    settings = load_settings()
+    settings = await load_settings()
     new_text = update.message.text
     
     # Determine which setting we're updating based on conversation state
@@ -1185,7 +1200,7 @@ async def settings_text_handler(update: Update, context: ContextTypes.DEFAULT_TY
             ])
         )
     
-    save_settings(settings)
+    await save_settings(settings)
     return ConversationHandler.END
 
 async def settings_image_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1198,7 +1213,7 @@ async def settings_image_handler(update: Update, context: ContextTypes.DEFAULT_T
         await update.message.reply_text("Please send an image.")
         return
     
-    settings = load_settings()
+    settings = await load_settings()
     photo = update.message.photo[-1]
     file_id = photo.file_id
     
@@ -1222,7 +1237,7 @@ async def settings_image_handler(update: Update, context: ContextTypes.DEFAULT_T
             ])
         )
     
-    save_settings(settings)
+    await save_settings(settings)
     return ConversationHandler.END
 
 async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1232,7 +1247,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         return
     
     button_text = update.message.text
-    settings = load_settings()
+    settings = await load_settings()
     
     try:
         # Parse button configuration
@@ -1279,7 +1294,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
                 ])
             )
         
-        save_settings(settings)
+        await save_settings(settings)
         return ConversationHandler.END
         
     except Exception as e:
@@ -1296,10 +1311,25 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
     if update.message.chat.type == "private":
+        # Track user
+        data = await load_data()
+        user_id = str(update.effective_user.id)
+        if user_id not in data["users"]:
+            data["users"][user_id] = {
+                "first_seen": datetime.utcnow().isoformat(),
+                "last_seen": datetime.utcnow().isoformat(),
+                "username": update.effective_user.username,
+                "first_name": update.effective_user.first_name,
+                "last_name": update.effective_user.last_name
+            }
+        else:
+            data["users"][user_id]["last_seen"] = datetime.utcnow().isoformat()
+        await save_data(data)
+        
         # Check if this is a deep link
         if context.args:
             file_id = context.args[0]
-            data = load_data()
+            data = await load_data()
             
             if file_id not in data["links"]:
                 await update.message.reply_text("Invalid or expired invite link.")
@@ -1328,7 +1358,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         "is_active": True,
                         "created_at": datetime.utcnow().isoformat()
                     }
-                    save_data(data)
+                    await save_data(data)
                     
                     # Use the new link
                     link_data = data["links"][file_id]
@@ -1395,7 +1425,7 @@ async def batch_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # maintain a list of all channels where the bot has been added as admin
         
         # For now, we'll use the channels already in our database
-        data = load_data()
+        data = await load_data()
         
         if not data["channels"]:
             await status_msg.edit_text("No channels found in database. Use /gen_link to add channels first.")
@@ -1447,7 +1477,7 @@ async def batch_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     message += f"• {channel_data['name']}: {bot_link}\n"
                     count += 1
         
-        save_data(data)
+        await save_data(data)
         
         # Split message if too long
         if len(message) > 4000:
@@ -1472,7 +1502,7 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     try:
-        data = load_data()
+        data = await load_data()
         
         if not data["channels"]:
             await update.message.reply_text("No active channels found.\n\nUse /gen_link to create channel links.")
@@ -1521,7 +1551,7 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else:
                     keyboard.append([InlineKeyboardButton("Next ➡️", callback_data=f"list_channels_{page+1}")])
         
-        keyboard.append([InlineKeyboardButton(f"Page {page}/{total_pages}", callback_data="page_info")])
+        keyboard.append([InlineKeyboardButton(f"Page {page}/{total_pages", callback_data="page_info")])
         keyboard.append([InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")])
         
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1635,7 +1665,7 @@ async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You are not authorized to use this bot.")
         return
     
-    data = load_data()
+    data = await load_data()
     admins = data.get("admins", [])
     
     message = "Bot Admins:\n\n"
@@ -1661,7 +1691,7 @@ async def users_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You are not authorized to use this bot.")
         return
     
-    data = load_data()
+    data = await load_data()
     users_count = len(data.get("users", {}))
     admins_count = len(data.get("admins", []))
     banned_count = len(data.get("banned_users", []))
@@ -1694,7 +1724,7 @@ async def auth_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_id = int(context.args[0])
         days = int(context.args[1])
         
-        data = load_data()
+        data = await load_data()
         
         # Initialize users dictionary if it doesn't exist
         if "users" not in data:
@@ -1709,7 +1739,7 @@ async def auth_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "authorized_at": datetime.utcnow().isoformat()
         }
         
-        save_data(data)
+        await save_data(data)
         
         await update.message.reply_text(
             f"User {user_id} authorized for {days} days until {expiry_date.strftime('%Y-%m-%d %H:%M:%S UTC')}"
@@ -1731,11 +1761,11 @@ async def deauth_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user_id = int(context.args[0])
         
-        data = load_data()
+        data = await load_data()
         
         if "users" in data and str(user_id) in data["users"]:
             del data["users"][str(user_id)]
-            save_data(data)
+            await save_data(data)
             await update.message.reply_text(f"User {user_id} deauthorized.")
         else:
             await update.message.reply_text(f"User {user_id} not found in authorized users.")
@@ -1760,13 +1790,13 @@ async def promote_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ADMIN_IDS.append(user_id)
             
             # Save to data file for persistence
-            data = load_data()
+            data = await load_data()
             if "admins" not in data:
                 data["admins"] = []
             
             if user_id not in data["admins"]:
                 data["admins"].append(user_id)
-                save_data(data)
+                await save_data(data)
             
             await update.message.reply_text(f"User {user_id} promoted to admin.")
         else:
@@ -1792,10 +1822,10 @@ async def demote_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             ADMIN_IDS.remove(user_id)
             
             # Remove from data file
-            data = load_data()
+            data = await load_data()
             if "admins" in data and user_id in data["admins"]:
                 data["admins"].remove(user_id)
-                save_data(data)
+                await save_data(data)
             
             await update.message.reply_text(f"User {user_id} demoted from admin.")
         elif user_id == OWNER_ID:
@@ -1819,7 +1849,7 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user_id = int(context.args[0])
         
-        data = load_data()
+        data = await load_data()
         
         # Initialize banned users list if it doesn't exist
         if "banned_users" not in data:
@@ -1827,7 +1857,7 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         if user_id not in data["banned_users"]:
             data["banned_users"].append(user_id)
-            save_data(data)
+            await save_data(data)
             
             # Also remove from admins and authorized users if present
             if user_id in ADMIN_IDS and user_id != OWNER_ID:
@@ -1839,7 +1869,7 @@ async def ban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if "users" in data and str(user_id) in data["users"]:
                 del data["users"][str(user_id)]
             
-            save_data(data)
+            await save_data(data)
             
             await update.message.reply_text(f"User {user_id} banned from using the bot.")
         else:
@@ -1861,11 +1891,11 @@ async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     try:
         user_id = int(context.args[0])
         
-        data = load_data()
+        data = await load_data()
         
         if "banned_users" in data and user_id in data["banned_users"]:
             data["banned_users"].remove(user_id)
-            save_data(data)
+            await save_data(data)
             await update.message.reply_text(f"User {user_id} unbanned.")
         else:
             await update.message.reply_text(f"User {user_id} is not banned.")
@@ -1882,13 +1912,13 @@ async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text("Restarting bot...")
     
     # Save current state
-    data = load_data()
+    data = await load_data()
     data["restart"] = {
         "chat_id": update.effective_chat.id,
         "message_id": update.effective_message.message_id,
         "time": datetime.utcnow().isoformat()
     }
-    save_data(data)
+    await save_data(data)
     
     # Use a proper restart mechanism
     os.execl(sys.executable, sys.executable, *sys.argv)
@@ -1904,7 +1934,7 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     message_text = " ".join(context.args)
-    data = load_data()
+    data = await load_data()
     
     # Get all user IDs from various sources
     user_ids = set()
@@ -1942,24 +1972,7 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"Broadcast completed.\nSuccess: {success_count}\nFailed: {fail_count}"
     )
-#Retrieving Json File of Channel_data
-async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Send the Channel_data.json file (Owner only)."""
-    user_id = update.effective_user.id
-    
-    if user_id != OWNER_ID:
-        await update.message.reply_text("You are not authorized to use this bot.")
-        return
 
-    if os.path.exists(JSON_STORAGE):
-        await update.message.reply_document(
-            document=open(JSON_STORAGE, "rb"),
-            filename="channel_data.json",
-            caption="📂 Here is your Channel data."
-        )
-    else:
-        await update.message.reply_text("⚠️ Channel_data.json file not found!")
-#Update bot from Github
 async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Update the bot from GitHub."""
     if not is_owner(update.effective_user.id):
@@ -1999,11 +2012,12 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     """Start the bot."""
     # Load admin IDs from data file for persistence
-    data = load_data()
-    if "admins" in data:
-        for admin_id in data["admins"]:
-            if admin_id not in ADMIN_IDS:
-                ADMIN_IDS.append(admin_id)
+    async def load_admin_ids():
+        data = await load_data()
+        if "admins" in data:
+            for admin_id in data["admins"]:
+                if admin_id not in ADMIN_IDS:
+                    ADMIN_IDS.append(admin_id)
     
     # Create the Application
     application = Application.builder().token(BOT_TOKEN).build()
@@ -2031,7 +2045,7 @@ def main():
     application.add_handler(CommandHandler("restart", restart_bot))
     application.add_handler(CommandHandler("broadcast", broadcast_message))
     application.add_handler(CommandHandler("update", update_bot))
-    application.add_handler(CommandHandler("Channels", channels))
+    
     # Button handlers
     application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
     
@@ -2065,34 +2079,28 @@ def main():
     
     # Initialize and run
     async def run():
+        await load_admin_ids()
         logger.info("Bot started successfully!")
         await application.initialize()
         await application.start()
-        await application.updater.start_polling(
-        timeout=30,
-        drop_pending_updates=True,
-        bootstrap_retries=5,
-        read_timeout=60,
-        write_timeout=60,
-        pool_timeout=60
- )
+        await application.updater.start_polling()
         
         # Check if we need to send restart confirmation
-        data = load_data()
+        data = await load_data()
         if "restart" in data:
             restart_data = data["restart"]
             try:
                 await application.bot.edit_message_text(
                     chat_id=restart_data["chat_id"],
                     message_id=restart_data["message_id"],
-                    text="✅ ʙᴏᴛ ʀᴇꜱᴛᴀʀᴛᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟy!"
+                    text="✅ ʙᴏᴘ ʀᴇꜱᴛᴀʀᴛᴇᴅ ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟy!"
                 )
             except:
                 pass
             
             # Remove restart data
             del data["restart"]
-            save_data(data)
+            await save_data(data)
         
         try:
             await asyncio.Event().wait()
@@ -2110,19 +2118,4 @@ def main():
         logger.info("Bot stopped by user")
 
 if __name__ == '__main__':
-    
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
