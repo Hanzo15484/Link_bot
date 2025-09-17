@@ -46,7 +46,7 @@ SETTINGS_STORAGE = "bot_settings.json"
 ) = range(17)
 
 # Image paths (will be managed through settings)
-START_IMAGE = "photo_2025-08-31_23-17-37.jpg"
+START_IMAGE = None
 HELP_IMAGE = "photo_2025-08-31_23-16-44.jpg"
 
 # Pagination
@@ -110,7 +110,7 @@ def load_settings():
 • ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
 • ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
 ✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʏ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
-                    "image": "photo_2025-08-31_23-17-37.jpg",
+                    "image": None
                     "buttons": [
                         [{"text": "ᴀʙᴏᴜᴛ", "url": "callback:about"}],
                         [{"text": "ᴄʟᴏsᴇ", "url": "callback:close"}]
@@ -170,7 +170,7 @@ def load_settings():
 • ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
 • ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
 ✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʏ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
-            "image": "photo_2025-08-31_23-17-37.jpg",
+            "image": None
             "buttons": [
                 [{"text": "ᴀʙᴏᴜᴛ", "url": "callback:about"}],
                 [{"text": "ᴄʟᴏsᴇ", "url": "callback:close"}]
@@ -2112,6 +2112,7 @@ def main():
 if __name__ == '__main__':
     
     main()
+
 
 
 
