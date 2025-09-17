@@ -26,9 +26,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-#Bot start time
-BOT_START_TIME = time.time()
-
 # Configuration
 BOT_TOKEN = "7965411711:AAHcFqZYLiNE6bvmBE2iQB_CYBWxME4PuKs"
 OWNER_ID = 5373577888
@@ -42,9 +39,6 @@ SETTINGS_STORAGE = "bot_settings.json"
 
 #Log 
 LOG_FILE = "bot.log"
-
-#image 
-PING_IMAGE = "/data/data/com.termux/files/home/storage/downloads/IMG_20250917_154821.jpg"
 
 # Conversation states
 (
@@ -2115,29 +2109,40 @@ async def button_handler_channels(update: Update, context: ContextTypes.DEFAULT_
             pass
 
 #Ping 
+BOT_START_TIME = time.time()
+
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    msg = await update.message.reply_text("🏓 Pinging bot...")
+    """Check bot uptime and responsiveness."""
     start_time = time.time()
-    await msg.edit_text("🏓 Pinging bot..")
+
+    # Send "Pinging..." message first
+    msg = await update.message.reply_text("⏳ Pinging...")
+
+    # Calculate latency
     end_time = time.time()
+    latency_ms = int((end_time - start_time) * 1000)
 
-    latency = round((end_time - start_time) * 1000, 2)  # ms
+    # Calculate uptime
     uptime_sec = int(time.time() - BOT_START_TIME)
-    uptime_str = str(datetime.timedelta(seconds=uptime_sec))
+    uptime_str = str(timedelta(seconds=uptime_sec))
 
-    await msg.delete()
+    # Delete "Pinging..." message
+    try:
+        await msg.delete()
+    except Exception:
+        pass
 
-    if os.path.exists(PING_IMAGE):
-        with open(PING_IMAGE, "rb") as f:
-            await update.message.reply_photo(
-                photo=f,
-                caption=f"🏓 Bot is alive!\n⏱️ API Latency: {latency} ms\n⏰ Uptime: {uptime_str}"
-            )
-    else:
-        await update.message.reply_text(
-            f"🏓 Bot is alive!\n⏱️ API Latency: {latency} ms\n⏰ Uptime: {uptime_str}"
-        )
-
+    # Send final message with image
+    await context.bot.send_photo(
+        chat_id=update.effective_chat.id,
+        photo="/data/data/com.termux/files/home/storage/downloads/IMG_20250917_154821.jpg",
+        caption=(
+            f"✅ **Pong!**\n"
+            f"📡 Latency: `{latency_ms} ms`\n"
+            f"⏱️ Uptime: `{uptime_str}`"
+        ),
+        parse_mode="Markdown"
+    )
 #log file 
 async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
@@ -2290,6 +2295,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
