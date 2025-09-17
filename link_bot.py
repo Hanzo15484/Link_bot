@@ -156,7 +156,7 @@ async def load_settings():
 • /restart – ʀᴇsᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ  
 • /broadcast – sᴇɴᴅ ᴀ ᴍᴇssᴀɢᴇ ᴛᴏ ᴀʟʟ ᴜsᴇʀs  
 • /update - ᴜᴘᴅᴀᴛᴇ ʙᴏᴛ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ""",
-                    "image": "photo_2025-08-31_23-16-44.jpg",
+                    "image": "/data/data/com.termux/files/home/storage/downloads/start_img.jpg",
                     "buttons": [
                         [
                             {"text": "ʀᴇǫᴜɪʀᴇᴍᴇɴᴛs", "url": "callback:help_requirements"},
@@ -182,7 +182,7 @@ async def load_settings():
 • ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
 • ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
 ✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʏ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
-            "image": "photo_2025-08-31_23-17-37.jpg",
+            "image": "/data/data/com.termux/files/home/storage/downloads/start_img.jpg",
             "buttons": [
                 [{"text": "ᴀʙᴏᴜᴛ", "url": "callback:about"}],
                 [{"text": "ᴄʟᴏsᴇ", "url": "callback:close"}]
@@ -2219,6 +2219,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
