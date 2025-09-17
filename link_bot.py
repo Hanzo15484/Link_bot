@@ -36,7 +36,6 @@ MESSAGE_CLEANUP_TIME = 3 * 60  # 6 minutes in seconds
 # JSON storage file
 JSON_STORAGE = "channel_data.json"
 SETTINGS_STORAGE = "bot_settings.json"
-CHANNEL_DATA = "Channel_data.json"
 
 # Conversation states
 (
@@ -2039,12 +2038,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("❌ You are not authorized to use this bot.")
         return
 
-    if query.data == "get_channel":
-        if os.path.exists(CHANNEL_DATA):
-            with open(CHANNEL_DATA, "rb") as file:
+    if query.data == "get_channels":
+        if os.path.exists(JSON_STORAGE):
+            with open(JSON_STORAGE, "rb") as file:
                 await query.message.reply_document(
                     document=file,
-                    filename="Channel_data.json",
+                    filename="channel_data.json",
                     caption="📂 Here is your Channel data."
                 )
         else:
@@ -2174,6 +2173,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
