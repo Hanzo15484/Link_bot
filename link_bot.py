@@ -1551,7 +1551,7 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else:
                     keyboard.append([InlineKeyboardButton("Next ➡️", callback_data=f"list_channels_{page+1}")])
         
-        keyboard.append([InlineKeyboardButton(f"Page {page}/{total_pages", callback_data="page_info")])
+        keyboard.append([InlineKeyboardButton(f"Page {page}/{total_pages}", callback_data="page_info")])
         keyboard.append([InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")])
         
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -2119,3 +2119,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
