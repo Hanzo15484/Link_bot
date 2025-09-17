@@ -2039,7 +2039,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text("❌ You are not authorized to use this bot.")
         return
 
-    if query.data == "get_channels":
+    if query.data == "get_channel":
         if os.path.exists(CHANNEL_DATA):
             with open(CHANNEL_DATA, "rb") as file:
                 await query.message.reply_document(
@@ -2174,6 +2174,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
