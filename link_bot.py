@@ -82,43 +82,85 @@ def is_owner(user_id):
     return user_id == OWNER_ID
 #temporary start message 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        # React ❤️ to user's command
     try:
         await update.message.set_reaction("❤️")
     except Exception:
-        pass
+        pass  # ignore if reaction not supported
 
-    # Temporary message
-    temp_msg = await update.message.reply_text("sᴛᴀʀᴛɪɴɢ ᴛʜᴇ ʙᴏᴛ....")
+    # Step 1: Send initial "starting"
+    msg = await update.message.reply_text("sᴛᴀʀᴛɪɴɢ ᴛʜᴇ ʙᴏᴛ....")
+
+    # Step 2: Countdown edits
+    for i in range(3, 0, -1):
+        await asyncio.sleep(1)
+        await msg.edit_text(f"sᴛᴀʀᴛɪɴɢ ᴛʜᴇ ʙᴏᴛ ɪɴ {i} sᴇᴄᴏɴᴅs....")
+
+    # Step 3: Show "Bot started"
     await asyncio.sleep(1)
-    await temp_msg.edit_text("sᴛᴀʀᴛɪɴɢ ᴛʜᴇ ʙᴏᴛ... 2")
-    await asyncio.sleep(1)
-    await temp_msg.edit_text("sᴛᴀʀᴛɪɴɢ ᴛʜᴇ ʙᴏᴛ... 1")
+    await msg.edit_text("✅ ʙᴏᴛ sᴛᴀʀᴛᴇᴅ")
+
+    # Step 4: Delete the startup animation message
     await asyncio.sleep(1)
     try:
-        await temp_msg.delete()
+        await msg.delete()
     except Exception:
         pass
 
-    # Now send the main start message
-    settings = await load_settings()
-    start_text = settings["start"]["text"]
-    start_image = settings["start"]["image"]
-    buttons = settings["start"]["buttons"]
+#load data
+async def load_data():
+    """Load data from JSON file asynchronously."""
+    if os.path.exists(JSON_STORAGE):
+        try:
+            async with aiofiles.open(JSON_STORAGE, 'r', encoding='utf-8') as f:
+                content = await f.read()
+                data = json.loads(content)
+                # Ensure all required keys exist
+                if "admins" not in data:
+                    data["admins"] = ADMIN_IDS.copy()
+                if "banned_users" not in data:
+                    data["banned_users"] = []
+                if "users" not in data:
+                    data["users"] = {}
+                return data
+        except Exception as e:
+            logger.error(f"Error loading data: {e}")
+            return {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
+    return {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
 
-    keyboard = InlineKeyboardMarkup(buttons)
-    if os.path.exists(start_image):
-        with open(start_image, "rb") as img_file:
-            await update.message.reply_photo(
-                photo=img_file,
-                caption=start_text,
-                reply_markup=keyboard
-            )
-    else:
-        await update.message.reply_text(
-            text=start_text,
-            reply_markup=keyboard
-        )
+async def save_data(data):
+    """Save data to JSON file asynchronously."""
+    try:
+        async with aiofiles.open(JSON_STORAGE, 'w', encoding='utf-8') as f:
+            await f.write(json.dumps(data, indent=2, ensure_ascii=False))
+    except Exception as e:
+        logger.error(f"Error saving data: {e}")
 
+async def load_settings():
+    """Load settings from JSON file asynchronously."""
+    if os.path.exists(SETTINGS_STORAGE):
+        try:
+            async with aiofiles.open(SETTINGS_STORAGE, 'r', encoding='utf-8') as f:
+                content = await f.read()
+                return json.loads(content)
+        except Exception as e:
+            logger.error(f"Error loading settings: {e}")
+            return {
+                "start": {
+                    "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
+• ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
+
+✦ ғᴇᴀᴛᴜʀᴇs:
+• ғᴀsᴛ ᴀɴᴅ ᴇᴀsʏ ʟɪɴᴋ ᴘʀᴏᴄᴇssɪɴɢ
+• ᴘᴇʀᴍᴀɴᴇɴᴛ ʟɪɴᴋs ᴡɪᴛʜ ᴛᴇᴍᴘᴏʀᴀʀʏ ᴀᴄᴄᴇss ғᴏʀ sᴀғᴇᴛʏ
+• ᴘʀɪᴠᴀᴛᴇ, sᴇᴄᴜʀᴇ, ᴀɴᴅ ғᴜʟʟʏ ᴘʀᴏᴛᴇᴄᴛᴇᴅ ᴄᴏɴᴛᴇɴᴛ
+✦ ᴇɴᴊᴏʏ ᴀ sᴍᴀʀᴛᴇʀ, sᴀғᴇʀ, ᴀɴᴅ ᴍᴏʀᴇ ᴘᴏᴡᴇʀғᴜʟ ᴡᴀʀ ᴛᴏ sʜᴀʀᴇ ʟɪɴᴋs!""",
+                    "image": "/data/data/com.termux/files/home/storage/downloads/start_img.jpg",
+                    "buttons": [
+                        [{"text": "ᴀʙᴏᴜᴛ", "url": "callback:about"}],
+                        [{"text": "ᴄʟᴏsᴇ", "url": "callback:close"}]
+                    ]
+                },
               "help": {
                     "text": """✦ ʙᴏᴛ ʜᴇʟᴘ ɢᴜɪᴅᴇ
 
@@ -2287,6 +2329,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
