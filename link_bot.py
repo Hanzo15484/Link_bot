@@ -2053,10 +2053,10 @@ async def channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [
             InlineKeyboardButton("📂 Channels", callback_data="get_channels"),
             InlineKeyboardButton("⚙️ Bot Settings", callback_data="get_settings"),
-        ]
-    ],
+        ],
     [     
             InlineKeyboardButton("❌ Close", callback_data="close_channels")
+    ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -2329,6 +2329,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
