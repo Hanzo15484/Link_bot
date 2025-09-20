@@ -1943,7 +1943,11 @@ async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You are not authorized to use this command.")
         return
     
-    await update.message.reply_text("Restarting bot...")
+    status_msg = await update.message.reply_text("ʀᴇꜱᴛᴀʀᴛɪɴɢ ʙᴏᴛ...")
+    await asyncio.sleep(2)
+
+    await status_msg.edit_text("ʙᴏᴛ ʀᴇꜱᴛᴀʀᴛᴇᴅ ✅")
+    await asyncio.sleep(3)
     
     # Save current state
     data = await load_data()
@@ -2329,6 +2333,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
