@@ -21,7 +21,7 @@ import aiofiles
 from telegram.constants import ChatType
 from dotenv import load_dotenv
 
-load_dotenv()  # Load variables from .env
+load_dotenv("Bot_Token.env")  # Load variables from .env
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 # Enable logging
 logging.basicConfig(
@@ -2336,6 +2336,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
