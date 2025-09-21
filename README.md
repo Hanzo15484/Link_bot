@@ -124,7 +124,7 @@ The bot includes comprehensive error handling for:
 
 ## Support
 
-For support and updates, contact the bot administrator or visit the project repository.
+For support and updates, contact the bot administrator t.me/Quarel7 or visit the project repository.
 
 ## License
 
