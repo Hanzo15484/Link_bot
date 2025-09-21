@@ -67,7 +67,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:  # skip non-message updates
         return
          # Restrict to private chat only
-    if update.message.chat.type != Chat.PRIVATE:
+    if update.message.chat.type != ChatType.PRIVATE:
         return  # ignore messages from groups/channels
     user_text = update.message.text or ""
     formatted_text = to_small_caps(user_text)
@@ -2334,6 +2334,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
