@@ -543,14 +543,14 @@ async def update_link_message(context, chat_id, message_id, new_invite_link, cha
     """Update an existing message with a new invite link."""
     try:
         keyboard = [
-            [InlineKeyboardButton("Click here to join now", url=new_invite_link)]
+            [InlineKeyboardButton("• ᴄʟɪᴄᴋ ʜᴇʀᴇ ᴛᴏ ᴊᴏɪɴ ɴᴏᴡ •", url=new_invite_link)]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         
         await context.bot.edit_message_text(
             chat_id=chat_id,
             message_id=message_id,
-            text=f"Join the channel '{channel_name}' by clicking the button below:",
+            text=f"ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ '{channel_name}' ʙy ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ:",
             reply_markup=reply_markup
         )
         logger.info(f"Updated message {message_id} with new invite link")
@@ -2333,6 +2333,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
