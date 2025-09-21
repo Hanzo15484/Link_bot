@@ -28,7 +28,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Configuration
-BOT_TOKEN = "7965411711:AAHcFqZYLiNE6bvmBE2iQB_CYBWxME4PuKs"
+BOT_TOKEN = "7965411711:AAFi2lgukyQvhMO7fXP7AN5NoBkFjTYlKXI"
 OWNER_ID = 5373577888
 ADMIN_IDS = [5373577888, 6170814776, 6959143950]
 LINK_DURATION = 5 * 60  # 5 minutes in seconds
@@ -2334,6 +2334,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
