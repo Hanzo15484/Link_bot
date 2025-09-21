@@ -19,7 +19,10 @@ import requests
 from io import BytesIO
 import aiofiles
 from telegram.constants import ChatType
+from dotenv import load_dotenv
 
+load_dotenv()  # Load variables from .env
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 # Enable logging
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -28,7 +31,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Configuration
-BOT_TOKEN = "7965411711:AAEhe8GsX3DQuL9AOLom-jHYja1dZwprWMk"
 OWNER_ID = 5373577888
 ADMIN_IDS = [5373577888, 6170814776, 6959143950]
 LINK_DURATION = 5 * 60  # 5 minutes in seconds
@@ -2334,6 +2336,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
