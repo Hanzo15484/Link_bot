@@ -39,6 +39,7 @@ MESSAGE_CLEANUP_TIME = 3 * 60  # 6 minutes in seconds
 MAINTENANCE_MODE = False
 SAFE_COMMANDS = ["start", "help", "id"]
 AWAITING_CUSTOM_ALERT = False
+BROADCAST_CANCELLED = False
 GITHUB_REPO = "Hanzo15484/link_bot.py"
 
 # JSON storage file
@@ -2237,15 +2238,70 @@ async def get_latest_commit_message():
             else:
                 return "No recent changes found."
 
-async def broadcast_to_users(context: ContextTypes.DEFAULT_TYPE, text: str):
-    """Broadcast message to all active users stored in load_data()."""
+
+async def broadcast_to_users_with_progress(context: ContextTypes.DEFAULT_TYPE, text: str, message_obj):
+    """
+    Broadcast message to all active users with progress bar and cancel support.
+    """
+    global BROADCAST_CANCELLED
+    BROADCAST_CANCELLED = False
+
     data = await load_data()
-    users = data.get("users", {})
-    for user_id in users:
+    users = list(data.get("users", {}))
+    total_users = len(users)
+    success_count = 0
+    failed_count = 0
+
+    keyboard = [[InlineKeyboardButton("Cancel ❌", callback_data="broadcast_cancel")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    for idx, user_id in enumerate(users, start=1):
+        if BROADCAST_CANCELLED:
+            await message_obj.edit_text("❌ Broadcasting cancelled by owner.")
+            return
+
         try:
             await context.bot.send_message(chat_id=int(user_id), text=text)
-        except Exception as e:
-            print(f"Failed to send to {user_id}: {e}")
+            success_count += 1
+        except Exception:
+            failed_count += 1
+
+        remaining_count = total_users - idx
+        percent = int((idx / total_users) * 100)
+        bar_length = 20
+        filled_length = int(bar_length * percent // 100)
+        bar = "█" * filled_length + "░" * (bar_length - filled_length)
+
+        status_text = (
+            f"📢 Broadcasting message...\n\n"
+            f"{bar} {percent}%\n"
+            f"✅ Success: {success_count}\n"
+            f"❌ Failed: {failed_count}\n"
+            f"⏳ Remaining: {remaining_count}\n"
+        )
+
+        await message_obj.edit_text(status_text, reply_markup=reply_markup)
+        await asyncio.sleep(0.05)  # slight delay to avoid rate limits
+
+    await message_obj.edit_text(
+        f"✅ Broadcasting completed!\n"
+        f"✅ Success: {success_count}\n"
+        f"❌ Failed: {failed_count}\n"
+        f"Total users: {total_users}"
+    )
+
+
+async def broadcast_cancel_callback(update, context: ContextTypes.DEFAULT_TYPE):
+    global BROADCAST_CANCELLED
+    query = update.callback_query
+    if query.from_user.id != OWNER_ID:
+        await query.answer("🚫 You are not authorized!", show_alert=True)
+        return
+
+    BROADCAST_CANCELLED = True
+    await query.answer("❌ Broadcasting cancelled")
+    await query.delete_message()
+
 
 # --- MAINTENANCE COMMAND ---
 async def maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2262,6 +2318,7 @@ async def maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     await update.message.reply_text("⚙️ Maintenance Mode Control:", reply_markup=reply_markup)
+
 
 # --- MAINTENANCE BUTTON CALLBACK ---
 async def maintenance_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2306,6 +2363,7 @@ async def maintenance_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     await query.edit_message_text("⚙️ Maintenance Mode Control:", reply_markup=InlineKeyboardMarkup(keyboard))
     await query.answer("Updated successfully ✅")
 
+
 # --- ALERT CALLBACK ---
 async def alert_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global AWAITING_CUSTOM_ALERT
@@ -2331,11 +2389,15 @@ async def alert_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif query.data == "alert_default":
         commit_message = await get_latest_commit_message()
         final_text = f"✅ The bot is now up, you can use it now\n\n📌 Changes: {commit_message}"
-        await query.edit_message_text("✅ Default alert sent to all users!")
-        await broadcast_to_users(context, final_text)
+        status_msg = await context.bot.send_message(
+            chat_id=OWNER_ID,
+            text="Starting broadcasting..."
+        )
+        await broadcast_to_users_with_progress(context, final_text, status_msg)
     elif query.data == "alert_custom":
         AWAITING_CUSTOM_ALERT = True
         await query.edit_message_text("✍️ Send the custom alert message now.")
+
 
 # --- CUSTOM ALERT MESSAGE HANDLER ---
 async def custom_alert(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2345,8 +2407,9 @@ async def custom_alert(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     AWAITING_CUSTOM_ALERT = False
     custom_text = update.message.text
-    await broadcast_to_users(context, custom_text)
-    await update.message.reply_text("✅ Custom alert sent to all users!")
+    status_msg = await update.message.reply_text("Starting broadcasting...")
+    await broadcast_to_users_with_progress(context, custom_text, status_msg)
+
 
 # --- MAINTENANCE GUARD ---
 async def maintenance_guard(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2414,6 +2477,7 @@ def main():
     application.add_handler(CallbackQueryHandler(alert_callback, pattern="^alert_"))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, custom_alert))
     application.add_handler(MessageHandler(filters.COMMAND, maintenance_guard), group=0)
+    application.add_handler(CallbackQueryHandler(broadcast_cancel_callback, pattern="broadcast_cancel"))
     
     # List channels pagination
     application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
@@ -2485,4 +2549,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
