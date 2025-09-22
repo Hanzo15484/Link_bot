@@ -35,6 +35,7 @@ OWNER_ID = 5373577888
 ADMIN_IDS = [5373577888, 6170814776, 6959143950]
 LINK_DURATION = 5 * 60  # 5 minutes in seconds
 MESSAGE_CLEANUP_TIME = 3 * 60  # 6 minutes in seconds
+MAINTENANCE_MODE = False
 
 # JSON storage file
 JSON_STORAGE = "channel_data.json"
@@ -2219,6 +2220,71 @@ async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await msg.edit_text("⚠️ Log file not found!")
 
+/maintenance command
+async def maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != OWNER_ID:
+        await update.message.reply_text("🚫 Only the bot owner can use this command.")
+        return
+
+    keyboard = [
+        [
+            InlineKeyboardButton("On ✅" if MAINTENANCE_MODE else "On ❌", callback_data="maint_on"),
+            InlineKeyboardButton("Off ✅" if not MAINTENANCE_MODE else "Off ❌", callback_data="maint_off"),
+        ],
+        [InlineKeyboardButton("Close ❌", callback_data="maint_close")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await update.message.reply_text(
+        "⚙️ Maintenance Mode Control:",
+        reply_markup=reply_markup
+    )
+
+
+# Handle button presses
+async def maintenance_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global MAINTENANCE_MODE
+    query = update.callback_query
+    user_id = query.from_user.id
+
+    # Only owner can press buttons
+    if user_id != OWNER_ID:
+        await query.answer("🚫 You are not authorized!", show_alert=True)
+        return
+
+    if query.data == "maint_on":
+        MAINTENANCE_MODE = True
+    elif query.data == "maint_off":
+        MAINTENANCE_MODE = False
+    elif query.data == "maint_close":
+        await query.delete_message()
+        await query.answer("❌ Closed")
+        return
+
+    # Update buttons dynamically
+    keyboard = [
+        [
+            InlineKeyboardButton("On ✅" if MAINTENANCE_MODE else "On ❌", callback_data="maint_on"),
+            InlineKeyboardButton("Off ✅" if not MAINTENANCE_MODE else "Off ❌", callback_data="maint_off"),
+        ],
+        [InlineKeyboardButton("Close ❌", callback_data="maint_close")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await query.edit_message_text(
+        text="⚙️ Maintenance Mode Control:",
+        reply_markup=reply_markup
+    )
+    await query.answer("Updated successfully ✅")
+
+
+# Middleware check
+async def check_maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if MAINTENANCE_MODE and update.effective_user.id != OWNER_ID:
+        if update.message:
+            await update.message.reply_text("⚠️ Bot is under maintenance. Please try again later.")
+        return False
+    return True
 #main
 def main():
     """Start the bot."""
@@ -2259,12 +2325,15 @@ def main():
     application.add_handler(CommandHandler("channels", channels))
     application.add_handler(CommandHandler("ping", ping))
     application.add_handler(CommandHandler("log", get_log))
-    
+    application.add_handler(CommandHandler("maintenance", maintenance))
     # Button handlers
     application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
 
     #Channels Button Handlers 
     application.add_handler(CallbackQueryHandler(button_handler_channels, pattern="^(get_channels|get_settings|back_channels|close_channels)$"))
+
+    #Maintenance mode 
+    application.add_handler(CallbackQueryHandler(maintenance_callback, pattern="^maint_"))
     
     # List channels pagination
     application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
@@ -2336,6 +2405,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
