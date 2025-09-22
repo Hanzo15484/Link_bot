@@ -20,6 +20,7 @@ from io import BytesIO
 import aiofiles
 from telegram.constants import ChatType
 from dotenv import load_dotenv
+import aiohttp
 
 load_dotenv("Bot_Token.env")  # Load variables from .env
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -2484,3 +2485,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
