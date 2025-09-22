@@ -2220,7 +2220,7 @@ async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await msg.edit_text("⚠️ Log file not found!")
 
-/maintenance command
+#/maintenance command
 async def maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != OWNER_ID:
         await update.message.reply_text("🚫 Only the bot owner can use this command.")
@@ -2405,6 +2405,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
