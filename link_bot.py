@@ -36,6 +36,9 @@ ADMIN_IDS = [5373577888, 6170814776, 6959143950]
 LINK_DURATION = 5 * 60  # 5 minutes in seconds
 MESSAGE_CLEANUP_TIME = 3 * 60  # 6 minutes in seconds
 MAINTENANCE_MODE = False
+SAFE_COMMANDS = ["start", "help", "id"]
+AWAITING_CUSTOM_ALERT = False
+GITHUB_REPO = "Hanzo15484/link_bot.py"
 
 # JSON storage file
 JSON_STORAGE = "channel_data.json"
@@ -2221,6 +2224,29 @@ async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.edit_text("⚠️ Log file not found!")
 
 #/maintenance command
+async def get_latest_commit_message():
+    """Fetch latest commit message from GitHub repo."""
+    url = f"https://api.github.com/repos/{GITHUB_REPO}/commits"
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                latest_commit = data[0]
+                return latest_commit["commit"]["message"]
+            else:
+                return "No recent changes found."
+
+async def broadcast_to_users(context: ContextTypes.DEFAULT_TYPE, text: str):
+    """Broadcast message to all active users stored in load_data()."""
+    data = await load_data()
+    users = data.get("users", {})
+    for user_id in users:
+        try:
+            await context.bot.send_message(chat_id=int(user_id), text=text)
+        except Exception as e:
+            print(f"Failed to send to {user_id}: {e}")
+
+# --- MAINTENANCE COMMAND ---
 async def maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != OWNER_ID:
         await update.message.reply_text("🚫 Only the bot owner can use this command.")
@@ -2234,20 +2260,14 @@ async def maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("Close ❌", callback_data="maint_close")]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
+    await update.message.reply_text("⚙️ Maintenance Mode Control:", reply_markup=reply_markup)
 
-    await update.message.reply_text(
-        "⚙️ Maintenance Mode Control:",
-        reply_markup=reply_markup
-    )
-
-
-# Handle button presses
+# --- MAINTENANCE BUTTON CALLBACK ---
 async def maintenance_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global MAINTENANCE_MODE
     query = update.callback_query
     user_id = query.from_user.id
 
-    # Only owner can press buttons
     if user_id != OWNER_ID:
         await query.answer("🚫 You are not authorized!", show_alert=True)
         return
@@ -2256,12 +2276,25 @@ async def maintenance_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         MAINTENANCE_MODE = True
     elif query.data == "maint_off":
         MAINTENANCE_MODE = False
+        await query.delete_message()
+        # Ask if user wants to alert
+        keyboard = [
+            [
+                InlineKeyboardButton("Yes ✅", callback_data="alert_yes"),
+                InlineKeyboardButton("No ❌", callback_data="alert_no")
+            ]
+        ]
+        await query.message.reply_text(
+            "📢 Do you want to alert the users?",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        return
     elif query.data == "maint_close":
         await query.delete_message()
         await query.answer("❌ Closed")
         return
 
-    # Update buttons dynamically
+    # Update buttons
     keyboard = [
         [
             InlineKeyboardButton("On ✅" if MAINTENANCE_MODE else "On ❌", callback_data="maint_on"),
@@ -2269,22 +2302,65 @@ async def maintenance_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         ],
         [InlineKeyboardButton("Close ❌", callback_data="maint_close")]
     ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-
-    await query.edit_message_text(
-        text="⚙️ Maintenance Mode Control:",
-        reply_markup=reply_markup
-    )
+    await query.edit_message_text("⚙️ Maintenance Mode Control:", reply_markup=InlineKeyboardMarkup(keyboard))
     await query.answer("Updated successfully ✅")
 
+# --- ALERT CALLBACK ---
+async def alert_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global AWAITING_CUSTOM_ALERT
+    query = update.callback_query
 
-# Middleware check
-async def check_maintenance(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if query.from_user.id != OWNER_ID:
+        await query.answer("🚫 You are not authorized!", show_alert=True)
+        return
+
+    if query.data == "alert_yes":
+        keyboard = [
+            [
+                InlineKeyboardButton("Custom ✍️", callback_data="alert_custom"),
+                InlineKeyboardButton("Default 📢", callback_data="alert_default"),
+            ]
+        ]
+        await query.edit_message_text(
+            "📢 Do you want to send a custom alert or default alert?",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+    elif query.data == "alert_no":
+        await query.edit_message_text("❌ No alert will be sent.")
+    elif query.data == "alert_default":
+        commit_message = await get_latest_commit_message()
+        final_text = f"✅ The bot is now up, you can use it now\n\n📌 Changes: {commit_message}"
+        await query.edit_message_text("✅ Default alert sent to all users!")
+        await broadcast_to_users(context, final_text)
+    elif query.data == "alert_custom":
+        AWAITING_CUSTOM_ALERT = True
+        await query.edit_message_text("✍️ Send the custom alert message now.")
+
+# --- CUSTOM ALERT MESSAGE HANDLER ---
+async def custom_alert(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global AWAITING_CUSTOM_ALERT
+    if not AWAITING_CUSTOM_ALERT or update.effective_user.id != OWNER_ID:
+        return
+
+    AWAITING_CUSTOM_ALERT = False
+    custom_text = update.message.text
+    await broadcast_to_users(context, custom_text)
+    await update.message.reply_text("✅ Custom alert sent to all users!")
+
+# --- MAINTENANCE GUARD ---
+async def maintenance_guard(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global MAINTENANCE_MODE
+    if not update.message:
+        return
+
     if MAINTENANCE_MODE and update.effective_user.id != OWNER_ID:
-        if update.message:
-            await update.message.reply_text("⚠️ Bot is under maintenance. Please try again later.")
-        return False
-    return True
+        text = update.message.text or ""
+        if text.startswith("/"):
+            command = text.split()[0].replace("/", "").lower()
+            if command not in SAFE_COMMANDS:
+                await update.message.reply_text("⚠️ Bot is under maintenance. Please try again later.")
+                return
+
 #main
 def main():
     """Start the bot."""
@@ -2334,6 +2410,9 @@ def main():
 
     #Maintenance mode 
     application.add_handler(CallbackQueryHandler(maintenance_callback, pattern="^maint_"))
+    application.add_handler(CallbackQueryHandler(alert_callback, pattern="^alert_"))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, custom_alert))
+    application.add_handler(MessageHandler(filters.COMMAND, maintenance_guard), group=0)
     
     # List channels pagination
     application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
@@ -2405,47 +2484,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
