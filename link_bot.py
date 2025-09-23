@@ -21,6 +21,8 @@ import aiofiles
 from telegram.constants import ChatType
 from dotenv import load_dotenv
 import aiohttp
+import psutil
+import platform
 
 load_dotenv("Bot_Token.env")  # Load variables from .env
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -2425,6 +2427,41 @@ async def maintenance_guard(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("⚠️ Bot is under maintenance. Please try again later.")
                 return
 
+# Function to format system uptime
+def get_uptime():
+    boot_time = datetime.fromtimestamp(psutil.boot_time())
+    uptime = datetime.now() - boot_time
+    return str(timedelta(seconds=int(uptime.total_seconds())))
+
+# /stats command handler
+def stats(update: Update, context: CallbackContext):
+    # CPU usage
+    cpu_usage = psutil.cpu_percent(interval=1)
+
+    # RAM usage
+    ram = psutil.virtual_memory()
+    ram_usage = f"{ram.percent}% ({ram.used // (1024**2)}MB / {ram.total // (1024**2)}MB)"
+
+    # Disk usage
+    disk = psutil.disk_usage('/')
+    disk_usage = f"{disk.percent}% ({disk.used // (1024**3)}GB / {disk.total // (1024**3)}GB)"
+
+    # Uptime
+    uptime = get_uptime()
+
+    # System Info
+    system_info = f"""
+📊 <b>System Stats</b>
+
+🖥 CPU Usage: {cpu_usage}%
+💾 RAM Usage: {ram_usage}
+📀 Disk Usage: {disk_usage}
+⏳ Uptime: {uptime}
+🖥 Platform: {platform.system()} {platform.release()}
+    """
+
+    update.message.reply_text(system_info, parse_mode="HTML")
+    
 #main
 def main():
     """Start the bot."""
@@ -2466,6 +2503,7 @@ def main():
     application.add_handler(CommandHandler("ping", ping))
     application.add_handler(CommandHandler("log", get_log))
     application.add_handler(CommandHandler("maintenance", maintenance))
+    application.add_handler(CommandHandler("stats", stats))
     # Button handlers
     application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
 
@@ -2549,5 +2587,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
