@@ -2433,13 +2433,8 @@ def get_uptime():
     uptime = datetime.now() - boot_time
     return str(timedelta(seconds=int(uptime.total_seconds())))
 
-# Generate stats safely (skip CPU on Termux if permission denied)
+# Generate stats text (CPU skipped for Termux)
 def generate_stats_text():
-    try:
-        cpu_usage = f"{psutil.cpu_percent()}%"
-    except PermissionError:
-        cpu_usage = "Permission Denied ⚠️"
-
     ram = psutil.virtual_memory()
     ram_usage = f"{ram.percent}% ({ram.used // (1024**2)}MB / {ram.total // (1024**2)}MB)"
     disk = psutil.disk_usage('/')
@@ -2449,11 +2444,11 @@ def generate_stats_text():
     return f"""
 📊 <b>System Stats</b>
 
-🖥 CPU Usage: {cpu_usage}
 💾 RAM Usage: {ram_usage}
 📀 Disk Usage: {disk_usage}
 ⏳ Uptime: {uptime}
 🖥 Platform: {platform.system()} {platform.release()}
+⚠️ CPU stats not available on Termux without root
     """
 
 # /stats command
@@ -2598,6 +2593,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
