@@ -2426,24 +2426,30 @@ async def maintenance_guard(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if command not in SAFE_COMMANDS:
                 await update.message.reply_text("⚠️ Bot is under maintenance. Please try again later.")
                 return
+
 # Helper function to get system uptime
 def get_uptime():
     boot_time = datetime.fromtimestamp(psutil.boot_time())
     uptime = datetime.now() - boot_time
     return str(timedelta(seconds=int(uptime.total_seconds())))
 
-# Helper function to generate stats text
+# Generate stats safely (skip CPU on Termux if permission denied)
 def generate_stats_text():
-    cpu_usage = psutil.cpu_percent()
+    try:
+        cpu_usage = f"{psutil.cpu_percent()}%"
+    except PermissionError:
+        cpu_usage = "Permission Denied ⚠️"
+
     ram = psutil.virtual_memory()
     ram_usage = f"{ram.percent}% ({ram.used // (1024**2)}MB / {ram.total // (1024**2)}MB)"
     disk = psutil.disk_usage('/')
     disk_usage = f"{disk.percent}% ({disk.used // (1024**3)}GB / {disk.total // (1024**3)}GB)"
     uptime = get_uptime()
+
     return f"""
 📊 <b>System Stats</b>
 
-🖥 CPU Usage: {cpu_usage}%
+🖥 CPU Usage: {cpu_usage}
 💾 RAM Usage: {ram_usage}
 📀 Disk Usage: {disk_usage}
 ⏳ Uptime: {uptime}
@@ -2462,12 +2468,11 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     if query.data == "refresh_stats":
-        await query.answer()  # Acknowledge button click
+        await query.answer()
         await query.edit_message_text(generate_stats_text(), parse_mode="HTML",
                                       reply_markup=InlineKeyboardMarkup(
                                           [[InlineKeyboardButton("Refresh 🔄", callback_data="refresh_stats")]]
                                       ))
-    
 #main
 def main():
     """Start the bot."""
@@ -2593,6 +2598,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
