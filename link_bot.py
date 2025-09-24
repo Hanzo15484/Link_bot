@@ -156,7 +156,7 @@ async def save_data(data):
             await f.write(json.dumps(data, indent=2, ensure_ascii=False))
     except Exception as e:
         logger.error(f"Error saving data: {e}")
-      return {
+        return {
                 "start": {
                     "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
 • ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
@@ -215,7 +215,7 @@ async def save_data(data):
                         ]
                     ]
                 }
-            }
+  }
     return {
         "start": {
             "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
@@ -2549,6 +2549,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
