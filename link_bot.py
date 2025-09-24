@@ -28,8 +28,9 @@ load_dotenv("Bot_Token.env")  # Load variables from .env
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 # Enable logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.WARNING
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.ERROR,  # Reduce log verbosity
+    handlers=[logging.FileHandler('bot.log'), logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
 
@@ -2438,7 +2439,14 @@ def main():
                     ADMIN_IDS.append(admin_id)
     
     # Create the Application
-    application = Application.builder().token(BOT_TOKEN).read_timeout(60).write_timeout(60).build()
+    application = (Application.builder()
+    .token(BOT_TOKEN)
+    .read_timeout(15)
+    .write_timeout(10)  
+    .connect_timeout(5)
+    .pool_timeout(20)
+    .get_updates_read_timeout(25)
+    .build())
 
     # Add handlers
     application.add_handler(CommandHandler("start", start))
@@ -2514,6 +2522,11 @@ def main():
         await application.initialize()
         await application.start()
         await application.updater.start_polling()
+        # Keep connection alive with shorter intervals for Termux
+       application.updater.job_queue.scheduler.configure(
+       timezone="UTC",
+       max_workers=2  # Reduce worker threads for Termux
+     )
         
         # Check if we need to send restart confirmation
         data = await load_data()
@@ -2549,6 +2562,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
