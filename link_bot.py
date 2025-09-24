@@ -2522,12 +2522,12 @@ def main():
         await application.initialize()
         await application.start()
         await application.updater.start_polling()
-        # Keep connection alive with shorter intervals for Termux
-       application.updater.job_queue.scheduler.configure(
-       timezone="UTC",
-       max_workers=2  # Reduce worker threads for Termux
-)           
-        
+  # Keep connection alive with shorter intervals for Termux  
+        if hasattr(application.updater, 'job_queue') and hasattr(application.updater.job_queue, 'scheduler'):
+            application.updater.job_queue.scheduler.configure(
+                timezone="UTC",
+                max_workers=2  # Reduce worker threads for Termux
+            )
         # Check if we need to send restart confirmation
         data = await load_data()
         if "restart" in data:
@@ -2562,6 +2562,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
