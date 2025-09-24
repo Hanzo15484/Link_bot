@@ -146,14 +146,6 @@ async def load_data():
             return BOT_CACHE
     BOT_CACHE = {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
     return BOT_CACHE
-    
-async def save_data(data):
-    """Save data to JSON file asynchronously."""
-    try:
-        async with aiofiles.open(JSON_STORAGE, 'w', encoding='utf-8') as f:
-            await f.write(json.dumps(data, indent=2, ensure_ascii=False))
-    except Exception as e:
-        logger.error(f"Error saving data: {e}")
 
 async def save_data(data):
     """Save data to JSON file asynchronously and update cache."""
@@ -164,7 +156,7 @@ async def save_data(data):
             await f.write(json.dumps(data, indent=2, ensure_ascii=False))
     except Exception as e:
         logger.error(f"Error saving data: {e}")
-            return {
+      return {
                 "start": {
                     "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
 • ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
@@ -2557,6 +2549,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
