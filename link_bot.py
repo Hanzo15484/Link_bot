@@ -47,10 +47,11 @@ GITHUB_REPO = "Hanzo15484/link_bot.py"
 # JSON storage file
 JSON_STORAGE = "channel_data.json"
 SETTINGS_STORAGE = "bot_settings.json"
-
 #Log 
 LOG_FILE = "bot.log"
 
+#Cache 
+BOT_CACHE = {}
 # Conversation states
 (
     ABOUT, HELP_REQUIREMENTS, HELP_HOW, HELP_TROUBLESHOOT,
@@ -120,25 +121,32 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 #load data
 async def load_data():
-    """Load data from JSON file asynchronously."""
+    """Load data from JSON file asynchronously with cache."""
+    global BOT_CACHE
+    if BOT_CACHE:  # Return cached version if already loaded
+        return BOT_CACHE
+
     if os.path.exists(JSON_STORAGE):
         try:
             async with aiofiles.open(JSON_STORAGE, 'r', encoding='utf-8') as f:
                 content = await f.read()
                 data = json.loads(content)
-                # Ensure all required keys exist
+                # Ensure required keys exist
                 if "admins" not in data:
                     data["admins"] = ADMIN_IDS.copy()
                 if "banned_users" not in data:
                     data["banned_users"] = []
                 if "users" not in data:
                     data["users"] = {}
+                BOT_CACHE = data
                 return data
         except Exception as e:
             logger.error(f"Error loading data: {e}")
-            return {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
-    return {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
-
+            BOT_CACHE = {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
+            return BOT_CACHE
+    BOT_CACHE = {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
+    return BOT_CACHE
+    
 async def save_data(data):
     """Save data to JSON file asynchronously."""
     try:
@@ -147,15 +155,15 @@ async def save_data(data):
     except Exception as e:
         logger.error(f"Error saving data: {e}")
 
-async def load_settings():
-    """Load settings from JSON file asynchronously."""
-    if os.path.exists(SETTINGS_STORAGE):
-        try:
-            async with aiofiles.open(SETTINGS_STORAGE, 'r', encoding='utf-8') as f:
-                content = await f.read()
-                return json.loads(content)
-        except Exception as e:
-            logger.error(f"Error loading settings: {e}")
+async def save_data(data):
+    """Save data to JSON file asynchronously and update cache."""
+    global BOT_CACHE
+    BOT_CACHE = data
+    try:
+        async with aiofiles.open(JSON_STORAGE, 'w', encoding='utf-8') as f:
+            await f.write(json.dumps(data, indent=2, ensure_ascii=False))
+    except Exception as e:
+        logger.error(f"Error saving data: {e}")
             return {
                 "start": {
                     "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
@@ -2438,7 +2446,7 @@ def main():
                     ADMIN_IDS.append(admin_id)
     
     # Create the Application
-    application = Application.builder().token(BOT_TOKEN).build()
+    application = Application.builder().token(BOT_TOKEN).read_timeout(60).write_timeout(60).build()
 
     # Add handlers
     application.add_handler(CommandHandler("start", start))
@@ -2549,6 +2557,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
