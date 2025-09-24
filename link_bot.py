@@ -2526,7 +2526,7 @@ def main():
        application.updater.job_queue.scheduler.configure(
        timezone="UTC",
        max_workers=2  # Reduce worker threads for Termux
-       )
+)           
         
         # Check if we need to send restart confirmation
         data = await load_data()
@@ -2562,6 +2562,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
