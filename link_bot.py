@@ -85,6 +85,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     formatted_text = to_small_caps(user_text)
     await update.message.reply_text(formatted_text)
 
+async def load_settings(filename='settings.json'):
+    try:
+        async with aiofiles.open(filename, 'r') as f:
+            content = await f.read()
+            settings = json.loads(content)
+        return settings
+    except FileNotFoundError:
+        # Return default settings if file does not exist
+        return {}
+    except Exception as e:
+        print(f"Error loading settings: {e}")
+        return {}
 # Utility Functions
 def is_admin(user_id):
     """Check if user is an admin."""
@@ -2562,6 +2574,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
