@@ -131,17 +131,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await msg.delete()
     except Exception:
         pass
-#delete 
-async def delete_start_on_new_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Use this in a message handler to delete the start message when user sends anything else."""
-    msg_id = context.user_data.get("start_message_id")
-    if msg_id:
-        try:
-            await update.message.chat.delete_message(msg_id)
-        except Exception:
-            pass
-        context.user_data.pop("start_message_id", None)
-        
 #load data
 async def load_data():
     """Load data from JSON file asynchronously with cache."""
@@ -2583,6 +2572,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
