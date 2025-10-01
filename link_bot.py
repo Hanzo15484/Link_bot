@@ -2437,16 +2437,25 @@ async def maintenance_guard(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if command not in SAFE_COMMANDS:
                 await update.message.reply_text("⚠️ Bot is under maintenance. Please try again later.")
                 return
+                
+#Forward_from_channel              
 async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
 
-    # Check if the message is forwarded from a channel
-    if message and message.forward_from_chat and message.forward_from_chat.type == "channel":
-        channel_id = message.forward_from_chat.id
-        channel_title = message.forward_from_chat.title
-        await message.reply_text(f"📢 Forwarded Channel:\nTitle: {channel_title}\nID: `{channel_id}`")
-    else:
+    if not message or not message.forward_origin:
         await message.reply_text("⚠️ This message is not forwarded from a channel!")
+        return
+
+    origin = message.forward_origin
+
+    # If forwarded from a channel
+    if origin.type == "channel":
+        channel_id = origin.chat.id
+        channel_title = origin.chat.title
+        await message.reply_text(f"📢 Forwarded Channel:\nTitle: {channel_title}\nID: `{channel_id}`")
+
+    else:
+        await message.reply_text("⚠️ This forwarded message is not from a channel.")
 #main
 def main():
     """Start the bot."""
@@ -2584,6 +2593,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
