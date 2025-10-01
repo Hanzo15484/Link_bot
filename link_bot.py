@@ -2174,7 +2174,11 @@ BOT_START_TIME = time.time()
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Check bot uptime and responsiveness."""
     start_time = time.time()
-
+    try:
+        await update.message.delete()
+    except Exception as e:
+        print(f"Could not delete message: {e}")
+        
     # Send "Pinging..." message first
     msg = await update.message.reply_text("⏳ Pinging...")
 
@@ -2599,6 +2603,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
