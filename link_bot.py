@@ -2040,7 +2040,7 @@ async def broadcast_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Update the bot from GitHub."""
     if not is_owner(update.effective_user.id):
-        try:
+    try:
         await update.message.delete()
     except Exception as e:
         print(f"Could not delete message: {e}")
@@ -2611,6 +2611,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
