@@ -1961,11 +1961,18 @@ async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Restart the bot."""
+    try:
+        await update.message.delete()
+    except Exception as e:
+        print(f"Could not delete message: {e}")
     if not is_owner(update.effective_user.id):
         await update.message.reply_text("You are not authorized to use this command.")
         return
     
-    status_msg = await update.message.reply_text("ʀᴇꜱᴛᴀʀᴛɪɴɢ ʙᴏᴛ...")
+    status_msg = await context.bot.send_message(
+        chat_id=update.effective_chat.id,
+        text="ʀᴇꜱᴛᴀʀᴛɪɴɢ ʙᴏᴛ..."
+    )
     await asyncio.sleep(2)
 
     await status_msg.edit_text("ʙᴏᴛ ʀᴇꜱᴛᴀʀᴛᴇᴅ ✅")
@@ -2612,6 +2619,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
