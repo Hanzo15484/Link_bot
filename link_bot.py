@@ -77,9 +77,11 @@ def to_small_caps(text: str) -> str:
 
 def start(update, context):
     try:
-        update.message.delete()
+        # delete the user's /start message
+        context.bot.delete_message(chat_id=update.message.chat_id, message_id=update.message.message_id)
     except:
         pass
+
         
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:  # skip non-message updates
@@ -2625,6 +2627,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
