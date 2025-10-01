@@ -2184,7 +2184,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         print(f"Could not delete message: {e}")
         
     # Send "Pinging..." message first
-    msg = await update.message.reply_text("⏳ Pinging...")
+    msg = await context.bot.send_message("⏳ Pinging...")
 
     # Calculate latency
     end_time = time.time()
@@ -2607,6 +2607,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
