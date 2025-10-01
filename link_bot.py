@@ -75,6 +75,12 @@ def to_small_caps(text: str) -> str:
     }
     return "".join(small_caps_map.get(ch.lower(), ch) for ch in text)
 
+def start(update, context):
+    try:
+        update.message.delete()
+    except:
+        pass
+        
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message:  # skip non-message updates
         return
@@ -2619,6 +2625,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
