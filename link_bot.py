@@ -2452,8 +2452,8 @@ async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYP
     if origin.type == "channel":
         channel_id = origin.chat.id
         channel_title = origin.chat.title
-        await message.reply_text(f"📢 Forwarded Channel:\nTitle: {channel_title}\nID: `{channel_id}`")
-
+        await message.reply_text(f"📢 Forwarded Channel:\nTitle: {channel_title}\nID: \\`{channel_id}\\`")
+        parse_mode="MarkdownV2"
     else:
         await message.reply_text("⚠️ This forwarded message is not from a channel.")
 #main
@@ -2593,6 +2593,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
