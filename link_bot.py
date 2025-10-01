@@ -2043,7 +2043,10 @@ async def update_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("You are not authorized to use this command.")
         return
     
-    status_msg = await update.message.reply_text("𖡡 ᴩᴜʟʟɪɴɢ ʟᴀᴛᴇꜱᴛ ᴜᴩᴅᴀᴛᴇ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ...")
+    status_msg = await context.bot.send_message(
+          chat_id=update.effective_chat.id,
+          text="𖡡 ᴩᴜʟʟɪɴɢ ʟᴀᴛᴇꜱᴛ ᴜᴩᴅᴀᴛᴇ ꜰʀᴏᴍ ɢɪᴛʜᴜʙ..."
+      )
     
     try:
         # Pull latest changes from GitHub
@@ -2609,6 +2612,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
