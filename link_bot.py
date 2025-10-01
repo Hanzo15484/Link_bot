@@ -2442,21 +2442,24 @@ async def maintenance_guard(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
 
-    if not message or not message.forward_origin:
+    if not message or not getattr(message, "forward_origin", None):
         await message.reply_text("⚠️ This message is not forwarded from a channel!")
         return
 
     origin = message.forward_origin
 
-    # If forwarded from a channel
     if origin.type == "channel":
-        channel_id = origin.chat.id
+        channel_id = str(origin.chat.id)
         channel_title = origin.chat.title
+
+        # Escape MarkdownV2 special characters for title and ID
         channel_title_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', channel_title)
-        channel_id_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', str(channel_id))
-        await message.reply_text(f"📢 Forwarded Channel:\nTitle: {channel_title}\nID: ```{channel_id}```",
-        parse_mode="MarkdownV2"
-    )
+        channel_id_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', channel_id)
+
+        await message.reply_text(
+            f"📢 Forwarded Channel:\nTitle: {channel_title_safe}\nID: `{channel_id_safe}`",
+            parse_mode="MarkdownV2"
+        )
     else:
         await message.reply_text("⚠️ This forwarded message is not from a channel.")
 #main
@@ -2596,6 +2599,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
