@@ -1962,6 +1962,10 @@ async def unban_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Restart the bot."""
     if not is_owner(update.effective_user.id):
+        try:
+        await update.message.delete()
+    except Exception as e:
+        print(f"Could not delete message: {e}")
         await update.message.reply_text("You are not authorized to use this command.")
         return
     
@@ -2607,6 +2611,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
