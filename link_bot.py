@@ -2185,7 +2185,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     # Send "Pinging..." message first
     msg = await context.bot.send_message(
-       chat_id=update.effective.chat_id,
+       chat_id=update.effective_chat.id,
        text="⏳ Pinging..."
     )
     # Calculate latency
@@ -2609,6 +2609,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
