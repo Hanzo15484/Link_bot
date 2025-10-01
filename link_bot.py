@@ -2452,8 +2452,8 @@ async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYP
     if origin.type == "channel":
         channel_id = origin.chat.id
         channel_title = origin.chat.title
-        channel_title_escaped = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', channel_title)
-        channel_id_escaped = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', str(channel_id))
+        channel_title_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', channel_title)
+        channel_id_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', str(channel_id))
         await message.reply_text(f"📢 Forwarded Channel:\nTitle: {channel_title}\nID: \`{channel_id}\`",
         parse_mode="MarkdownV2"
     )
@@ -2596,6 +2596,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
