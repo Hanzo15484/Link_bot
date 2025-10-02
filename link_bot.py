@@ -2469,7 +2469,10 @@ async def maintenance_guard(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #Forward_from_channel              
 async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.message
-
+    
+    if message.chat.type != "private":
+    return
+    
     if not message or not getattr(message, "forward_origin", None):
         await message.reply_text("⚠️ This message is not forwarded from a channel!")
         return
@@ -2627,6 +2630,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
