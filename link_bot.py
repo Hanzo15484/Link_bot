@@ -1712,8 +1712,8 @@ async def search_channel_message(update: Update, context: ContextTypes.DEFAULT_T
 
     # Send result
       # Escape MarkdownV2 special chars
-      channel_title_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['title'])
-      channel_id_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['id'])
+    channel_title_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['title'])
+    channel_id_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['id'])
 
         # Get invite link
         try:
@@ -2759,6 +2759,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
