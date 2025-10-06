@@ -80,22 +80,24 @@ def to_small_caps(text: str) -> str:
 # small-caps message handler
 async def smallcaps_handler(update, context):
     text = update.message.text or ""
-
+    
     # skip commands or if user is in search flow
     if text.startswith("/") or context.user_data.get('skip_smallcaps'):
         return
 
-    # convert to small caps
     transformed = to_small_caps(text)
 
-    # send bot reply
-    msg = await update.message.reply_text(transformed)
+    # send bot reply and store the message object
+    bot_msg = await update.message.reply_text(transformed)
 
     # wait 2 seconds
     await asyncio.sleep(2)
 
-    # delete bot's reply
-    await msg.delete()
+    # try deleting bot's message
+    try:
+        await bot_msg.delete()
+    except Exception as e:
+        print("Failed to delete message:", e)
 
 def start(update, context):
     try:
@@ -2756,6 +2758,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
