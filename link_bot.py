@@ -1711,59 +1711,16 @@ async def search_channel_message(update: Update, context: ContextTypes.DEFAULT_T
     pending_search.pop(user_id, None)
 
     # Send result
-      # Escape MarkdownV2 special chars
-    channel_title_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['title'])
-    channel_id_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['id'])
-
-     # Get invite link
-    try:
-        chat = await context.bot.get_chat(found_casync def search_channel_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.message.text.strip()
-
-    # Load channel data
-    try:
-        with open("channel_data.json", "r") as f:
-            data = json.load(f)
-    except Exception as e:
-        await update.message.reply_text(f"⚠️ Error reading channel data: {e}")
-        return
-
-    found_channel = None
-    for channel_id, info in data.get("channels", {}).items():
-        if query.lower() in info["name"].lower():  # Case-insensitive search
-            found_channel = {
-                "id": channel_id,
-                "title": info["name"],
-                "file_id": info["file_id"],
-                "created_at": info.get("created_at", str(datetime.now()))
-            }
-            break
-
     if found_channel:
-        # Escape MarkdownV2 characters
-        channel_title_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['title'])
-        channel_id_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['id'])
-
-        # Try to get real invite link
-        try:
-            chat = await context.bot.get_chat(found_channel["id"])
-            if chat.username:  # Public channel
-                invite_link = f"https://t.me/{chat.username}"
-            elif chat.invite_link:  # Private channel
-                invite_link = chat.invite_link
-            else:
-                invite_link = "(Link expired or not available)"
-        except Exception:
-            invite_link = "(Link expired or not available)"
-
-        await update.message.reply_text(
-            f"✅ *Channel Found!*\n\n"
-            f"*Title:* {channel_title_safe}\n"
-            f"*ID:* `{channel_id_safe}`\n"
-            f"*Invite Link:* {invite_link}\n"
-            f"*Base64 Link:* https://t.me/Yaganohara_bot?start={found_channel['file_id']}",
-            parse_mode="MarkdownV2"
+        bot_username = (await context.bot.get_me()).username
+        base64_link = f"https://t.me/{bot_username}?start={found_channel['file_id']}"
+        result_text = (
+            f"✅ Channel Found!\n\n"
+            f"Title: {found_channel['title']}\n"
+            f"ID: {found_channel['id']}\n"
+            f"Link: {base64_link}"
         )
+        await update.message.reply_text(result_text)
     else:
         await update.message.reply_text("❌ No matching channel found.")
 
@@ -2779,6 +2736,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
