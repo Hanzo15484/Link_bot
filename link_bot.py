@@ -2652,7 +2652,8 @@ def main():
     #Maintenance mode 
     application.add_handler(CallbackQueryHandler(maintenance_callback, pattern="^maint_"))
     application.add_handler(CallbackQueryHandler(alert_callback, pattern="^alert_"))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, custom_alert))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, custom_alert),
+    group=1)
     application.add_handler(MessageHandler(filters.COMMAND, maintenance_guard), group=0)
     application.add_handler(CallbackQueryHandler(broadcast_cancel_callback, pattern="broadcast_cancel"))
     
@@ -2661,7 +2662,8 @@ def main():
     #Search Handler
     application.add_handler(CallbackQueryHandler(search_channel_callback, pattern="^search_channel$"))
     # Message handler for capturing search term
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, search_channel_message))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, search_channel_message),
+    group=0)
     # Settings conversation handler
     settings_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("settings", settings_command)],
@@ -2685,7 +2687,8 @@ def main():
     
     application.add_handler(settings_conv_handler)
     
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message),
+    group=2)
     
     # Initialize and run
     async def run():
@@ -2734,6 +2737,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
