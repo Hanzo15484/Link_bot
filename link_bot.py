@@ -68,14 +68,14 @@ LIST_CHANNELS_PAGE_SIZE = 10
 #Search Range
 SEARCH_CHANNEL = range(1)
 # small caps
-def to_small_caps(text: str) -> str:
-    small_caps_map = {
-        "a": "ᴀ", "b": "ʙ", "c": "ᴄ", "d": "ᴅ", "e": "ᴇ", "f": "ғ", "g": "ɢ",
-        "h": "ʜ", "i": "ɪ", "j": "ᴊ", "k": "ᴋ", "l": "ʟ", "m": "ᴍ", "n": "ɴ",
-        "o": "ᴏ", "p": "ᴘ", "q": "ǫ", "r": "ʀ", "s": "s", "t": "ᴛ", "u": "ᴜ",
-        "v": "ᴠ", "w": "ᴡ", "x": "x", "y": "ʏ", "z": "ᴢ"
-    }
-    return "".join(small_caps_map.get(ch.lower(), ch) for ch in text)
+#def to_small_caps(text: str) -> str:
+    #small_caps_map = {
+       # "a": "ᴀ", "b": "ʙ", "c": "ᴄ", "d": "ᴅ", "e": "ᴇ", "f": "ғ", "g": "ɢ",
+       # "h": "ʜ", "i": "ɪ", "j": "ᴊ", "k": "ᴋ", "l": "ʟ", "m": "ᴍ", "n": "ɴ",
+       # "o": "ᴏ", "p": "ᴘ", "q": "ǫ", "r": "ʀ", "s": "s", "t": "ᴛ", "u": "ᴜ",
+        #"v": "ᴠ", "w": "ᴡ", "x": "x", "y": "ʏ", "z": "ᴢ"
+ #   }
+   # return "".join(small_caps_map.get(ch.lower(), ch) for ch in text)
 
 def start(update, context):
     try:
@@ -1711,19 +1711,38 @@ async def search_channel_message(update: Update, context: ContextTypes.DEFAULT_T
     pending_search.pop(user_id, None)
 
     # Send result
-    if found_channel:
+      # Escape MarkdownV2 special chars
+        channel_title_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['title'])
+        channel_id_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['id'])
+
+        # Get invite link
+        try:
+            chat = await context.bot.get_chat(found_channel["id"])
+            if chat.username:  # Public channel
+                invite_link = f"https://t.me/{chat.username}"
+            elif chat.invite_link:  # Private channel
+                invite_link = chat.invite_link
+            else:
+                invite_link = "(Link expired or not available)"
+        except Exception:
+            invite_link = "(Link expired or not available)"
+
         bot_username = (await context.bot.get_me()).username
-        chat = await context.bot.get_chat(channel_id)
-        invite_link = chat.invite_link
         base64_link = f"https://t.me/{bot_username}?start={found_channel['file_id']}"
+
+        # Escape MarkdownV2 for link text
+        invite_link_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', invite_link)
+        base64_link_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', base64_link)
+
         result_text = (
-            f"✅ **Channel Found!**\n\n"
-            f"**Title:** {found_channel['title']}\n"
-            f"**ID:** `{found_channel['id']}`\n"
-            f"**Invite Link:** {invite_link}\n"
-            f"**Base64 Link:** {base64_link}"
+            f"✅ *Channel Found\\!*\\n\\n"
+            f"*Title:* {channel_title_safe}\\n"
+            f"*ID:* `{channel_id_safe}`\\n"
+            f"*Invite Link:* {invite_link_safe}\\n"
+            f"*Base64 Link:* {base64_link_safe}"
         )
-        await update.message.reply_text(result_text,
+
+        await update.message.reply_text(result_text, 
         parse_mode="MarkdownV2")
     else:
         await update.message.reply_text("❌ No matching channel found.")
@@ -2740,6 +2759,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
