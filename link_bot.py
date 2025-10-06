@@ -65,6 +65,8 @@ BOT_CACHE = {}
 # Pagination
 LIST_CHANNELS_PAGE_SIZE = 10
 
+#Search Range
+SEARCH_CHANNEL = range(1)
 # small caps
 def to_small_caps(text: str) -> str:
     small_caps_map = {
@@ -2699,6 +2701,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
