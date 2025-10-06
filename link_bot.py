@@ -1659,6 +1659,9 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
       query = update.callback_query
       if query.data == "page_info":
        await query.answer(text="ʏᴏᴜ ᴀʀᴇ ᴏɴ: {page}/{total_pages}", show_alert=True)
+    except Exception as e:
+        logger.error(f"Error listing channels: {e}")
+        await update.message.reply_text(f"Error retrieving channel list: {str(e)}")
     
 # Temporary dict to store users who clicked "Search 🔍"
 pending_search = {}
@@ -2771,6 +2774,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
