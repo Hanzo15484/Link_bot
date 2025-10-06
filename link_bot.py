@@ -1715,8 +1715,8 @@ async def search_channel_message(update: Update, context: ContextTypes.DEFAULT_T
     channel_title_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['title'])
     channel_id_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['id'])
 
-        # Get invite link
-        try:
+   # Get invite link
+       try:
             chat = await context.bot.get_chat(found_channel["id"])
             if chat.username:  # Public channel
                 invite_link = f"https://t.me/{chat.username}"
@@ -2759,6 +2759,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
