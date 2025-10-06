@@ -1645,11 +1645,6 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         reply_markup = InlineKeyboardMarkup(keyboard)
 
-async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
-      query = update.callback_query
-    
-    if query.data == "page_info":
-        await query.answer(text="ʏᴏᴜ ᴀʀᴇ ᴏɴ: {page}/{total_pages}", show_alert=True)
         # If this is a callback query, edit the message instead of sending a new one
         if hasattr(update, 'callback_query') and update.callback_query:
             await update.callback_query.edit_message_text(message, reply_markup=reply_markup)
@@ -1660,6 +1655,12 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Error listing channels: {e}")
         await update.message.reply_text(f"Error retrieving channel list: {str(e)}")
 
+async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+      query = update.callback_query
+    
+    if query.data == "page_info":
+        await query.answer(text="ʏᴏᴜ ᴀʀᴇ ᴏɴ: {page}/{total_pages}", show_alert=True)
+    
 # Temporary dict to store users who clicked "Search 🔍"
 pending_search = {}
 
@@ -2771,6 +2772,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
