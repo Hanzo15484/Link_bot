@@ -1633,6 +1633,9 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Error listing channels: {e}")
         await update.message.reply_text(f"Error retrieving channel list: {str(e)}")
 
+# Temporary dict to store users who clicked "Search 🔍"
+pending_search = {}
+
 # Load channel data
 async def load_channel_data():
     try:
@@ -1641,34 +1644,44 @@ async def load_channel_data():
     except FileNotFoundError:
         return {"channels": {}}
 
-# 🔍 Callback handler for Search button
-async def search_button_callback(update, context: ContextTypes.DEFAULT_TYPE):
-    """Triggered when user clicks 'Search 🔍' button."""
+# 🔍 Callback for "Search 🔍" button
+async def search_channel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    # Delete the previous message (list message)
+    # Delete previous list message
     try:
         await query.message.delete()
     except:
         pass
 
-    # Ask for search term
-    await query.message.reply_text("🔍 Please send the **channel name** you want to search:")
+    # Ask user for channel name
+    prompt_msg = await query.message.reply_text("🔍 Please send the **channel name** you want to search:")
 
-    # Wait for user reply (next message)
-    response = await context.bot.wait_for_message(
-        chat_id=query.message.chat_id,
-        from_user=query.from_user.id,
-        timeout=60
-    )
+    # Store pending search: user_id -> chat_id and prompt message
+    pending_search[query.from_user.id] = {
+        "chat_id": query.message.chat_id,
+        "prompt_msg_id": prompt_msg.message_id
+    }
 
-    if not response:
-        await query.message.reply_text("⏰ Search timed out. Try again.")
+# Message handler to capture search term
+async def search_channel_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+
+    # Only respond if user clicked the search button before
+    if user_id not in pending_search:
         return
 
-    search_term = response.text.strip()
-    await query.message.reply_text(f"Searching for **{search_term}**...")
+    search_term = update.message.text.strip()
+
+    # Delete user's message for cleaner chat
+    try:
+        await update.message.delete()
+    except:
+        pass
+
+    # Send temporary "Searching..." message
+    searching_msg = await update.message.reply_text(f"🔎 Searching for **{search_term}**...")
 
     # Load channel data
     data = await load_channel_data()
@@ -1684,10 +1697,20 @@ async def search_button_callback(update, context: ContextTypes.DEFAULT_TYPE):
             }
             break
 
-    # Delete searching message
-    await asyncio.sleep(1.5)
-    await query.message.delete()
+    # Delete prompt and "Searching..." messages
+    try:
+        chat_id = pending_search[user_id]["chat_id"]
+        prompt_msg_id = pending_search[user_id]["prompt_msg_id"]
+        await context.bot.delete_message(chat_id=chat_id, message_id=prompt_msg_id)
+        await asyncio.sleep(1)  # small delay
+        await searching_msg.delete()
+    except:
+        pass
 
+    # Remove user from pending_search
+    pending_search.pop(user_id, None)
+
+    # Send result
     if found_channel:
         bot_username = (await context.bot.get_me()).username
         base64_link = f"https://t.me/{bot_username}?start={found_channel['file_id']}"
@@ -1698,9 +1721,9 @@ async def search_button_callback(update, context: ContextTypes.DEFAULT_TYPE):
             f"**Invite Link:** (Link expired or not available)\n"
             f"**Base64 Link:** {base64_link}"
         )
-        await query.message.reply_text(result_text)
+        await update.message.reply_text(result_text)
     else:
-        await query.message.reply_text("❌ No matching channel found.")
+        await update.message.reply_text("❌ No matching channel found.")
 
     
 async def list_channels_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2636,7 +2659,9 @@ def main():
     # List channels pagination
     application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
     #Search Handler
-    application.add_handler(CallbackQueryHandler(search_button_callback, pattern="^search_channel$"))
+    application.add_handler(CallbackQueryHandler(search_channel_callback, pattern="^search_channel$"))
+    # Message handler for capturing search term
+application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, search_channel_message))
     # Settings conversation handler
     settings_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("settings", settings_command)],
@@ -2709,6 +2734,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
