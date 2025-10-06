@@ -1656,7 +1656,7 @@ async def search_channel_callback(update: Update, context: ContextTypes.DEFAULT_
         pass
 
     # Ask user for channel name
-    prompt_msg = await query.message.reply_text("🔍 Please send the **channel name** you want to search:")
+    prompt_msg = await query.message.reply_text("🔍 Please send the channel name you want to search:")
 
     # Store pending search: user_id -> chat_id and prompt message
     pending_search[query.from_user.id] = {
@@ -1681,7 +1681,7 @@ async def search_channel_message(update: Update, context: ContextTypes.DEFAULT_T
         pass
 
     # Send temporary "Searching..." message
-    searching_msg = await update.message.reply_text(f"🔎 Searching for **{search_term}**...")
+    searching_msg = await update.message.reply_text(f"🔎 Searching for {search_term}...")
 
     # Load channel data
     data = await load_channel_data()
@@ -1713,15 +1713,18 @@ async def search_channel_message(update: Update, context: ContextTypes.DEFAULT_T
     # Send result
     if found_channel:
         bot_username = (await context.bot.get_me()).username
+        chat = await context.bot.get_chat(channel_id)
+        invite_link = chat.invite_link
         base64_link = f"https://t.me/{bot_username}?start={found_channel['file_id']}"
         result_text = (
             f"✅ **Channel Found!**\n\n"
             f"**Title:** {found_channel['title']}\n"
             f"**ID:** `{found_channel['id']}`\n"
-            f"**Invite Link:** (Link expired or not available)\n"
+            f"**Invite Link:** {invite_link}\n"
             f"**Base64 Link:** {base64_link}"
         )
-        await update.message.reply_text(result_text)
+        await update.message.reply_text(result_text,
+        parse_mode="MarkdownV2")
     else:
         await update.message.reply_text("❌ No matching channel found.")
 
@@ -2737,6 +2740,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
