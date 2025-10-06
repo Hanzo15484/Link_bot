@@ -68,16 +68,6 @@ LIST_CHANNELS_PAGE_SIZE = 10
 #Search Range
 SEARCH_CHANNEL = range(1)
  #small caps
-def to_small_caps(text: str) -> str:
-    small_caps_map = {
-        "a": "ᴀ", "b": "ʙ", "c": "ᴄ", "d": "ᴅ", "e": "ᴇ", "f": "ғ", "g": "ɢ",
-        "h": "ʜ", "i": "ɪ", "j": "ᴊ", "k": "ᴋ", "l": "ʟ", "m": "ᴍ", "n": "ɴ",
-        "o": "ᴏ", "p": "ᴘ", "q": "ǫ", "r": "ʀ", "s": "s", "t": "ᴛ", "u": "ᴜ",
-        "v": "ᴠ", "w": "ᴡ", "x": "x", "y": "ʏ", "z": "ᴢ"
-    }
-    return "".join(small_caps_map.get(ch.lower(), ch) for ch in text)
-
-# small-caps message handler
 async def smallcaps_handler(update, context):
     text = update.message.text or ""
     
@@ -99,6 +89,16 @@ async def smallcaps_handler(update, context):
     except Exception as e:
         print("Failed to delete message:", e)
 
+# small-caps message handler
+def to_small_caps(text: str) -> str:
+    small_caps_map = {
+        "a": "ᴀ", "b": "ʙ", "c": "ᴄ", "d": "ᴅ", "e": "ᴇ", "f": "ғ", "g": "ɢ",
+        "h": "ʜ", "i": "ɪ", "j": "ᴊ", "k": "ᴋ", "l": "ʟ", "m": "ᴍ", "n": "ɴ",
+        "o": "ᴏ", "p": "ᴘ", "q": "ǫ", "r": "ʀ", "s": "s", "t": "ᴛ", "u": "ᴜ",
+        "v": "ᴠ", "w": "ᴡ", "x": "x", "y": "ʏ", "z": "ᴢ"
+    }
+    return "".join(small_caps_map.get(ch.lower(), ch) for ch in text)
+    
 def start(update, context):
     try:
         # delete the user's /start message
@@ -2708,11 +2708,12 @@ def main():
     
     application.add_handler(settings_conv_handler)
     
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message),
-    group=2)
-
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, smallcaps_handler),
     group=2)
+
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message),
+    group=2)
+    
     
     # Initialize and run
     async def run():
@@ -2761,6 +2762,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
