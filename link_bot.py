@@ -2661,7 +2661,7 @@ def main():
     #Search Handler
     application.add_handler(CallbackQueryHandler(search_channel_callback, pattern="^search_channel$"))
     # Message handler for capturing search term
-application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, search_channel_message))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, search_channel_message))
     # Settings conversation handler
     settings_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("settings", settings_command)],
@@ -2734,6 +2734,7 @@ application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, search_c
 
 if __name__ == '__main__':
     main()
+
 
 
 
