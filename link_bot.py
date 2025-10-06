@@ -1633,62 +1633,75 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Error listing channels: {e}")
         await update.message.reply_text(f"Error retrieving channel list: {str(e)}")
 
-# --- SEARCH CALLBACK ---
-async def search_channel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Triggered when user clicks 'Search Channel' button."""
-    query = update.callback_query
-    await query.answer()
-    await query.message.delete()
-    await query.message.reply_text("🔎 Please send the channel name you want to search:")
-    return SEARCH_CHANNEL
-
-
-# --- SEARCH HANDLER ---
-async def search_channel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle searching a channel from channel_data.json by name."""
-    search_name = update.message.text.strip().lower()
-
-    # Load from your local JSON file
+# Load channel data
+async def load_channel_data():
     try:
         with open("channel_data.json", "r") as f:
-            data = json.load(f)
+            return json.load(f)
     except FileNotFoundError:
-        await update.message.reply_text("⚠️ channel_data.json not found.")
-        return ConversationHandler.END
+        return {"channels": {}}
 
-    msg = await update.message.reply_text(f"Searching **{search_name}**...", parse_mode="Markdown")
+# 🔍 Callback handler for Search button
+async def search_button_callback(update, context: ContextTypes.DEFAULT_TYPE):
+    """Triggered when user clicks 'Search 🔍' button."""
+    query = update.callback_query
+    await query.answer()
 
-    found_channel = None
-    for channel_id, info in data.get("channels", {}).items():
-        if search_name in info["name"].lower():
-            found_channel = (channel_id, info)
-            break
+    # Delete the previous message (list message)
+    try:
+        await query.message.delete()
+    except:
+        pass
 
-    await msg.delete()
+    # Ask for search term
+    await query.message.reply_text("🔍 Please send the **channel name** you want to search:")
 
-    if not found_channel:
-        await update.message.reply_text("❌ No channel found with that name.")
-        return ConversationHandler.END
-
-    channel_id, channel_data = found_channel
-    bot_username = (await context.bot.get_me()).username
-    base64_code = channel_data["file_id"]
-    bot_link = f"https://t.me/{bot_username}?start={base64_code}"
-
-    result_text = (
-        f"✅ **Channel Found!**\n\n"
-        f"📺 **Name:** {channel_data['name']}\n"
-        f"🆔 **Channel ID:** `{channel_id}`\n"
-        f"🔗 **Invite Link:** Not available (if not stored)\n"
-        f"🧩 **Base64 Link:** `{bot_link}`"
+    # Wait for user reply (next message)
+    response = await context.bot.wait_for_message(
+        chat_id=query.message.chat_id,
+        from_user=query.from_user.id,
+        timeout=60
     )
 
-    keyboard = [
-        [InlineKeyboardButton("🔙 Back to List", callback_data="list_channels_1")],
-        [InlineKeyboardButton("❌ Close", callback_data="close")]
-    ]
-    await update.message.reply_text(result_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
-    return ConversationHandler.END
+    if not response:
+        await query.message.reply_text("⏰ Search timed out. Try again.")
+        return
+
+    search_term = response.text.strip()
+    await query.message.reply_text(f"Searching for **{search_term}**...")
+
+    # Load channel data
+    data = await load_channel_data()
+    channels = data.get("channels", {})
+
+    found_channel = None
+    for channel_id, info in channels.items():
+        if search_term.lower() in info.get("name", "").lower():
+            found_channel = {
+                "title": info.get("name", "Unknown"),
+                "id": channel_id,
+                "file_id": info.get("file_id", "N/A")
+            }
+            break
+
+    # Delete searching message
+    await asyncio.sleep(1.5)
+    await query.message.delete()
+
+    if found_channel:
+        bot_username = (await context.bot.get_me()).username
+        base64_link = f"https://t.me/{bot_username}?start={found_channel['file_id']}"
+        result_text = (
+            f"✅ **Channel Found!**\n\n"
+            f"**Title:** {found_channel['title']}\n"
+            f"**ID:** `{found_channel['id']}`\n"
+            f"**Invite Link:** (Link expired or not available)\n"
+            f"**Base64 Link:** {base64_link}"
+        )
+        await query.message.reply_text(result_text)
+    else:
+        await query.message.reply_text("❌ No matching channel found.")
+
     
 async def list_channels_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle list channels pagination callbacks."""
@@ -2696,6 +2709,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
