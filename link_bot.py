@@ -1644,7 +1644,12 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard.append([InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")])
         
         reply_markup = InlineKeyboardMarkup(keyboard)
-        
+
+async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
+      query = update.callback_query
+    
+    if query.data == "page_info":
+        await query.answer(text="ʏᴏᴜ ᴀʀᴇ ᴏɴ: {page}/{total_pages}", show_alert=True)
         # If this is a callback query, edit the message instead of sending a new one
         if hasattr(update, 'callback_query') and update.callback_query:
             await update.callback_query.edit_message_text(message, reply_markup=reply_markup)
@@ -2762,6 +2767,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
