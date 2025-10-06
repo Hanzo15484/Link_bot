@@ -2710,6 +2710,9 @@ def main():
     
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message),
     group=2)
+
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, smallcaps_handler),
+    group=2)
     
     # Initialize and run
     async def run():
@@ -2758,6 +2761,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
