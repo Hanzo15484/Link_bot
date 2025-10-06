@@ -1608,14 +1608,15 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = []
         if total_pages > 1:
             if page > 1:
-                keyboard.append([InlineKeyboardButton("⬅️ Previous", callback_data=f"list_channels_{page-1}")])
+                keyboard.append([InlineKeyboardButton("《 ᴩʀᴇᴠɪᴏᴜꜱ", callback_data=f"list_channels_{page-1}")])
             if page < total_pages:
                 if keyboard:
-                    keyboard[0].append(InlineKeyboardButton("Next ➡️", callback_data=f"list_channels_{page+1}"))
+                    keyboard[0].append(InlineKeyboardButton("ɴᴇxᴛ 》", callback_data=f"list_channels_{page+1}"))
                 else:
-                    keyboard.append([InlineKeyboardButton("Next ➡️", callback_data=f"list_channels_{page+1}")])
+                    keyboard.append([InlineKeyboardButton("ɴᴇxᴛ 》", callback_data=f"list_channels_{page+1}")])
         
-        keyboard.append([InlineKeyboardButton(f"Page {page}/{total_pages}", callback_data="page_info")])
+        keyboard.append([InlineKeyboardButton(f"ᴩᴀɢᴇ {page}/{total_pages}", callback_data="page_info")])
+        keyboard.append([InlineKeyboardButton("⌕ ꜱᴇᴀʀᴄʜ ᴄʜᴀɴɴᴇʟ", callback_data="search_channel")])
         keyboard.append([InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")])
         
         reply_markup = InlineKeyboardMarkup(keyboard)
@@ -1630,6 +1631,63 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Error listing channels: {e}")
         await update.message.reply_text(f"Error retrieving channel list: {str(e)}")
 
+# --- SEARCH CALLBACK ---
+async def search_channel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Triggered when user clicks 'Search Channel' button."""
+    query = update.callback_query
+    await query.answer()
+    await query.message.delete()
+    await query.message.reply_text("🔎 Please send the channel name you want to search:")
+    return SEARCH_CHANNEL
+
+
+# --- SEARCH HANDLER ---
+async def search_channel_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle searching a channel from channel_data.json by name."""
+    search_name = update.message.text.strip().lower()
+
+    # Load from your local JSON file
+    try:
+        with open("channel_data.json", "r") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        await update.message.reply_text("⚠️ channel_data.json not found.")
+        return ConversationHandler.END
+
+    msg = await update.message.reply_text(f"Searching **{search_name}**...", parse_mode="Markdown")
+
+    found_channel = None
+    for channel_id, info in data.get("channels", {}).items():
+        if search_name in info["name"].lower():
+            found_channel = (channel_id, info)
+            break
+
+    await msg.delete()
+
+    if not found_channel:
+        await update.message.reply_text("❌ No channel found with that name.")
+        return ConversationHandler.END
+
+    channel_id, channel_data = found_channel
+    bot_username = (await context.bot.get_me()).username
+    base64_code = channel_data["file_id"]
+    bot_link = f"https://t.me/{bot_username}?start={base64_code}"
+
+    result_text = (
+        f"✅ **Channel Found!**\n\n"
+        f"📺 **Name:** {channel_data['name']}\n"
+        f"🆔 **Channel ID:** `{channel_id}`\n"
+        f"🔗 **Invite Link:** Not available (if not stored)\n"
+        f"🧩 **Base64 Link:** `{bot_link}`"
+    )
+
+    keyboard = [
+        [InlineKeyboardButton("🔙 Back to List", callback_data="list_channels_1")],
+        [InlineKeyboardButton("❌ Close", callback_data="close")]
+    ]
+    await update.message.reply_text(result_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+    return ConversationHandler.END
+    
 async def list_channels_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle list channels pagination callbacks."""
     query = update.callback_query
@@ -2562,7 +2620,13 @@ def main():
     
     # List channels pagination
     application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
-    
+
+    #Search Handler
+    application.add_handler(ConversationHandler(
+    entry_points=[CallbackQueryHandler(search_channel_callback, pattern="^search_channel$")],
+    states={SEARCH_CHANNEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, search_channel_handler)]},
+    fallbacks=[],
+))
     # Settings conversation handler
     settings_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("settings", settings_command)],
@@ -2635,6 +2699,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
