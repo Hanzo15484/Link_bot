@@ -1715,18 +1715,18 @@ async def search_channel_message(update: Update, context: ContextTypes.DEFAULT_T
     channel_title_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['title'])
     channel_id_safe = re.sub(r'([_*\[\]()~`>#+\-=|{}.!])', r'\\\1', found_channel['id'])
 
-   # Get invite link
-       try:
-            chat = await context.bot.get_chat(found_channel["id"])
-            if chat.username:  # Public channel
-                invite_link = f"https://t.me/{chat.username}"
-            elif chat.invite_link:  # Private channel
-                invite_link = chat.invite_link
-            else:
-                invite_link = "(Link expired or not available)"
-        except Exception:
+     # Get invite link
+    try:
+        chat = await context.bot.get_chat(found_channel["id"])
+        if chat.username:  # Public channel
+            invite_link = f"https://t.me/{chat.username}"
+        elif chat.invite_link:  # Private channel
+            invite_link = chat.invite_link
+        else:
             invite_link = "(Link expired or not available)"
-
+    except Exception:
+        invite_link = "(Link expired or not available)"
+        
         bot_username = (await context.bot.get_me()).username
         base64_link = f"https://t.me/{bot_username}?start={found_channel['file_id']}"
 
@@ -2759,6 +2759,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
