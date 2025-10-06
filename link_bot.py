@@ -2623,11 +2623,7 @@ def main():
     # List channels pagination
     application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
     #Search Handler
-    application.add_handler(ConversationHandler(
-    entry_points=[CallbackQueryHandler(search_channel_callback, pattern="^search_channel$")],
-    states={SEARCH_CHANNEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, search_channel_handler)]},
-    fallbacks=[],
-), group=0)
+    application.add_handler(CallbackQueryHandler(search_channel_callback, pattern="^search_channel$"))
     # Settings conversation handler
     settings_conv_handler = ConversationHandler(
         entry_points=[CommandHandler("settings", settings_command)],
@@ -2700,6 +2696,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
