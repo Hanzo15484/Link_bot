@@ -1660,14 +1660,14 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
       query = update.callback_query
     #Get page number from context args or default to 1
-      page = 1
-      if context.args and context.args[0].isdigit():
-        page = int(context.args[0])
+       page = 1
+       if context.args and context.args[0].isdigit():
+          page = int(context.args[0])
         
-     bot_username = (await context.bot.get_me()).username
-     channels = list(data["channels"].items())
-     total_pages = (len(channels) + LIST_CHANNELS_PAGE_SIZE - 1) // LIST_CHANNELS_PAGE_SIZE
-     page = max(1, min(page, total_pages))
+      bot_username = (await context.bot.get_me()).username
+      channels = list(data["channels"].items())
+      total_pages = (len(channels) + LIST_CHANNELS_PAGE_SIZE - 1) // LIST_CHANNELS_PAGE_SIZE
+      page = max(1, min(page, total_pages))
 
       if query.data == "page_info":
        await query.answer(text=f"ʏᴏᴜ ᴀʀᴇ ᴏɴ: {page}/{total_pages}", show_alert=True)
@@ -2784,6 +2784,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
