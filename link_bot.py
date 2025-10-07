@@ -69,6 +69,8 @@ LIST_CHANNELS_PAGE_SIZE = 10
 SEARCH_CHANNEL = range(1)
  #small caps
 async def smallcaps_handler(update, context):
+    if update.effective_chat.type != "private":
+       return
     text = update.message.text or ""
     
     # skip commands or if user is in search flow
@@ -2771,6 +2773,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
