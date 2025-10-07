@@ -2689,7 +2689,8 @@ def main():
     application.add_handler(CallbackQueryHandler(list_channels_callback, pattern="^list_channels_"))
 
     #Page alert
-    application.add_handler(CallbackQueryHandler(button_click))
+    application.add_handler(CallbackQueryHandler(button_click),
+    group=1)
     
     #Search Handler
     application.add_handler(CallbackQueryHandler(search_channel_callback, pattern="^search_channel$"))
@@ -2773,6 +2774,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
