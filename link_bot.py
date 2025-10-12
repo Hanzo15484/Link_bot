@@ -1663,7 +1663,7 @@ async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     # Make sure you call the function if 'channels' is a function
     if callable(channels):
-        channel_list = channels(update, context) # Call the function to get the actual list
+        channel_list = await channels(update, context) # Call the function to get the actual list
     else:
         channel_list = channels  # Already a list
 
@@ -2789,6 +2789,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
