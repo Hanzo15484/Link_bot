@@ -1659,8 +1659,10 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
       query = update.callback_query
+      total_pages = (len(channels) + LIST_CHANNELS_PAGE_SIZE - 1) // LIST_CHANNELS_PAGE_SIZE
+      page = max(1, min(page, total_pages
       if query.data == "page_info":
-       await query.answer(text="ʏᴏᴜ ᴀʀᴇ ᴏɴ: {page}/{total_pages}", show_alert=True)
+       await query.answer(text=f"ʏᴏᴜ ᴀʀᴇ ᴏɴ: {page}/{total_pages}", show_alert=True)
     
 # Temporary dict to store users who clicked "Search 🔍"
 pending_search = {}
@@ -2774,6 +2776,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
