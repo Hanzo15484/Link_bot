@@ -1658,12 +1658,25 @@ async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Error retrieving channel list: {str(e)}")
 
 async def button_click(update: Update, context: ContextTypes.DEFAULT_TYPE):
-      query = update.callback_query
-      total_pages = (len(channels) + LIST_CHANNELS_PAGE_SIZE - 1) // LIST_CHANNELS_PAGE_SIZE
-      page = max(1, min(page, total_pages))
-      if query.data == "page_info":
-       await query.answer(text=f"ʏᴏᴜ ᴀʀᴇ ᴏɴ: {page}/{total_pages}", show_alert=True)
-    
+    query = update.callback_query
+    await query.answer()  # Acknowledge the callback to prevent the loading animation
+
+    # Make sure you call the function if 'channels' is a function
+    if callable(channels):
+        channel_list = channels()  # Call the function to get the actual list
+    else:
+        channel_list = channels  # Already a list
+
+    # Get current page from query data or context (default to 1)
+    page = int(context.user_data.get("page", 1))
+
+    # Calculate total pages
+    total_pages = (len(channel_list) + LIST_CHANNELS_PAGE_SIZE - 1) // LIST_CHANNELS_PAGE_SIZE
+    page = max(1, min(page, total_pages))  # Clamp page within range
+
+    # Handle button actions
+    if query.data == "page_info":
+        await query.answer(text=f"ʏᴏᴜ ᴀʀᴇ ᴏɴ: {page}/{total_pages}", show_alert=True)
 # Temporary dict to store users who clicked "Search 🔍"
 pending_search = {}
 
@@ -2776,6 +2789,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
