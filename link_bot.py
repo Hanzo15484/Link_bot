@@ -23,6 +23,7 @@ from dotenv import load_dotenv
 import aiohttp
 import psutil
 import platform
+import random
 
 load_dotenv("Bot_Token.env")  # Load variables from .env
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -1457,7 +1458,13 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text("Error generating new invite link. Please try again.")
                     logger.error(f"Error regenerating link: {e}")
                     return
-
+                    
+            reactions = ["👍", "💞", "🎉", "🔥", "😎", "🥰"]
+            reaction = random.choice(reactions)
+            reaction_msg = await update.message.reply_text(reactions)
+            await asyncio.sleep(0.3)
+            await reaction_msg.delete()
+            
             wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
             await asyncio.sleep(0.4)
             await wait_msg.delete()
@@ -2793,6 +2800,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
