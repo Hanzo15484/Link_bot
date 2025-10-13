@@ -194,6 +194,16 @@ async def load_data():
     BOT_CACHE = {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
     return BOT_CACHE
 
+reactions = ["👍", "💞", "🎉", "🔥", "😎", "🥰"]
+
+async def add_temporary_reaction(update: Update):
+    reaction = random.choice(reactions)
+    await update.message.set_reaction([ReactionTypeEmoji(emoji=reaction)])
+    await asyncio.sleep(0.3)
+    await update.message.set_reaction([])
+    
+    # Remove the reaction
+    await update.message.set_reaction(reaction=[])
 async def save_data(data):
     """Save data to JSON file asynchronously and update cache."""
     global BOT_CACHE
@@ -1458,29 +1468,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text("Error generating new invite link. Please try again.")
                     logger.error(f"Error regenerating link: {e}")
                     return
-
-reactions = [
-    "👍",  # thumbs up
-    "💞",  # revolving hearts
-    "🎉",  # party popper
-    "🔥",  # fire
-    "😎",  # smiling face with sunglasses
-    "🥰"   # smiling face with hearts
-]
-
-async def react_to_message(update, context):
-    reaction = random.choice(reactions)
-    
-    # Add reaction to the message
-    await update.message.set_reaction(
-        reaction=[ReactionTypeEmoji(emoji=reaction)]
-    )
-    
-    await asyncio.sleep(0.3)
-    
-    # Remove the reaction
-    await update.message.set_reaction(reaction=[])
-            
+                    
+            await add_temporary_reaction(update)
             wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
             await asyncio.sleep(0.4)
             await wait_msg.delete()
@@ -2816,6 +2805,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
