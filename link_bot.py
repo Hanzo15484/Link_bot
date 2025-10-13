@@ -1460,12 +1460,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
             # Create inline button with the channel link
             keyboard = [
-                [InlineKeyboardButton("Click here to join now", url=link_data["invite_link"])]
+                [InlineKeyboardButton("• ᴄʟɪᴄᴋ ʜᴇʀᴇ ᴛᴏ ᴊᴏɪɴ ɴᴏᴡ •", url=link_data["invite_link"])]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
             
             message = await update.message.reply_text(
-                f"Join the channel '{channel_data['name']}' by clicking the button below:",
+                f"ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ʙʏ ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ:",
                 reply_markup=reply_markup
             )
             
@@ -2789,6 +2789,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
