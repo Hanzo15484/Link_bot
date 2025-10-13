@@ -1459,7 +1459,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     logger.error(f"Error regenerating link: {e}")
                     return
                     
-            reactions = ["👍", "💞", "🎉", "🔥", "😎", "🥰"]
+            reactions = [
+    "\U0001F44D",  # 👍
+    "\U0001F49E",  # 💞
+    "\U0001F389",  # 🎉
+    "\U0001F525",  # 🔥
+    "\U0001F60E",  # 😎
+    "\U0001F970"   # 🥰
+            ]
             reaction = random.choice(reactions)
             reaction_msg = await update.message.reply_text(reactions)
             await asyncio.sleep(0.3)
@@ -2800,6 +2807,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
