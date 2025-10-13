@@ -1459,7 +1459,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     return
 
             wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
             await wait_msg.delete()
             
             # Create inline button with the channel link
@@ -2793,6 +2793,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
