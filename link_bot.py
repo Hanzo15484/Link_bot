@@ -1401,10 +1401,6 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
     if update.message.chat.type == "private":
-     try: 
-         await update.message.delete()
-     except Exception as e:
-         print(f"Failed to delete /start: {e}")
         # Track user
         data = await load_data()
         user_id = str(update.effective_user.id)
@@ -2797,6 +2793,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
