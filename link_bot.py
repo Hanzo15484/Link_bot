@@ -199,11 +199,7 @@ reactions = ["👍", "💞", "🎉", "🔥", "😎", "🥰"]
 async def add_temporary_reaction(update: Update):
     reaction = random.choice(reactions)
     await update.message.set_reaction([ReactionTypeEmoji(emoji=reaction)])
-    await asyncio.sleep(0.3)
-    await update.message.set_reaction([])
     
-    # Remove the reaction
-    await update.message.set_reaction(reaction=[])
 async def save_data(data):
     """Save data to JSON file asynchronously and update cache."""
     global BOT_CACHE
@@ -2805,6 +2801,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
