@@ -194,7 +194,7 @@ async def load_data():
     BOT_CACHE = {"channels": {}, "links": {}, "users": {}, "admins": ADMIN_IDS.copy(), "banned_users": []}
     return BOT_CACHE
 
-reactions = ["👍", "💞", "🎉", "🔥", "😎", "🥰"]
+reactions = [ "🎉", "😎", "🥰"]
 
 async def add_temporary_reaction(update: Update):
     reaction = random.choice(reactions)
@@ -2801,6 +2801,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
