@@ -453,7 +453,7 @@ async def extract_channel_info(context, input_str):
 
 async def generate_single_link(update, context, channel_input):
     """Generate a link for a single channel."""
-    status_msg = await update.message.reply_text("Processing...")
+    status_msg = await update.message.reply_text("ᴘʀᴏᴄᴇssɪɴɢ...")
     
     try:
         # Extract channel info from the input
@@ -1401,6 +1401,10 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message when the command /start is issued."""
     if update.message.chat.type == "private":
+     try: 
+         await update.message.delete()
+     except Exception as e:
+         print(f"Failed to delete /start: {e}")
         # Track user
         data = await load_data()
         user_id = str(update.effective_user.id)
@@ -1457,6 +1461,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text("Error generating new invite link. Please try again.")
                     logger.error(f"Error regenerating link: {e}")
                     return
+
+            wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
+            await asyncio.sleep(1)
+            await wait_msg.delete()
             
             # Create inline button with the channel link
             keyboard = [
@@ -2789,6 +2797,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
