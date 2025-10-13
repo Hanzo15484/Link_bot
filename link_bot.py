@@ -1,5 +1,5 @@
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto, ReactionTypeEmoji
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler, ContextTypes,
     ConversationHandler, MessageHandler, filters
@@ -1458,19 +1458,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text("Error generating new invite link. Please try again.")
                     logger.error(f"Error regenerating link: {e}")
                     return
-                    
-            reactions = [
-    "\U0001F44D",  # 👍
-    "\U0001F49E",  # 💞
-    "\U0001F389",  # 🎉
-    "\U0001F525",  # 🔥
-    "\U0001F60E",  # 😎
-    "\U0001F970"   # 🥰
-            ]
-            reaction = random.choice(reactions)
-            reaction_msg = await update.message.reply_text(reactions)
-            await asyncio.sleep(0.3)
-            await reaction_msg.delete()
+
+reactions = [
+    "👍",  # thumbs up
+    "💞",  # revolving hearts
+    "🎉",  # party popper
+    "🔥",  # fire
+    "😎",  # smiling face with sunglasses
+    "🥰"   # smiling face with hearts
+]
+
+async def react_to_message(update, context):
+    reaction = random.choice(reactions)
+    
+    # Add reaction to the message
+    await update.message.set_reaction(
+        reaction=[ReactionTypeEmoji(emoji=reaction)]
+    )
+    
+    await asyncio.sleep(0.3)
+    
+    # Remove the reaction
+    await update.message.set_reaction(reaction=[])
             
             wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
             await asyncio.sleep(0.4)
@@ -2807,6 +2816,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
