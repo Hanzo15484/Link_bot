@@ -2652,6 +2652,13 @@ async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 # --- Font conversion ---
+import re
+
+def escape_md(text: str) -> str:
+    # Escape ALL MarkdownV2 reserved characters
+    escape_chars = r'_*\[\]()~`>#+-=|{}.!'
+    return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
+    
 def convert_font(text, style):
     base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -2739,7 +2746,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await waiting_msg.delete()
 
     converted = convert_font(update.message.text, style)
-    converted_escaped = escape_md_code(converted)
+    converted_escaped = escape_md(converted)
 
     await update.message.reply_text(
         f"✅ *Converted text:*\n```\n{converted_escaped}\n```",
@@ -2904,6 +2911,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
