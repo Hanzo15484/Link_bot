@@ -2669,18 +2669,23 @@ def convert_font(text, style):
         "smallcaps": "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀꜱᴛᴜᴠᴡxʏᴢABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "double": "𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ",
         "script": "𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒽𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵",
-        "bracket": "【ａ】【ｂ】【ｃ】【ｄ】【ｅ】【ｆ】【ｇ】【ｈ】【ｉ】【ｊ】【ｋ】【ｌ】【ｍ】【ｎ】【ｏ】【ｐ】【ｑ】【ｒ】【ｓ】【ｔ】【ｕ】【ｖ】【ｗ】【ｘ】【ｙ】【ｚ】【Ａ】【Ｂ】【Ｃ】【Ｄ】【Ｅ】【Ｆ】【Ｇ】【Ｈ】【Ｉ】【Ｊ】【Ｋ】【Ｌ】【Ｍ】【Ｎ】【Ｏ】【Ｐ】【Ｑ】【Ｒ】【Ｓ】【Ｔ】【Ｕ】【Ｖ】【Ｗ】【Ｘ】【Ｙ】【Ｚ】"
+        "bracket": "【ａ】【ｂ】【ｃ】【ｄ】【ｅ】【ｆ】【ｇ】【ｈ】【ｉ】【ｊ】【ｋ】【ｌ】【ｍ】【ｎ】【ｏ】【ｐ】【ｑ】【ｒ】【ｓ】【ｔ】【ｕ】【ｖ】【ｗ】【ｘ】【ｙ】【ｚ】【Ａ】【Ｂ】【Ｃ】【Ｄ】【Ｅ】【Ｆ】【Ｇ】【Ｈ】【Ｉ】【Ｊ】【Ｋ】【Ｌ】【Ｍ】【Ｎ】【Ｏ】【Ｐ】【Ｑ】【Ｒ】【Ｓ】【Ｔ】【Ｕ】【Ｖ】【Ｗ】【Ｘ】【Ｙ】【Ｚ】",
     }
 
     font_map = fonts.get(style, base)
 
-    # ensure equal length
-    if len(font_map) != len(base):
-        # fallback: zip only for common length
-        trans = str.maketrans(base[:len(font_map)], font_map)
-    else:
-        trans = str.maketrans(base, font_map)
+    # Ensure equal lengths by trimming or repeating
+    min_len = min(len(base), len(font_map))
+    base_trimmed = base[:min_len]
+    font_trimmed = font_map[:min_len]
 
+    # If shorter, pad remaining characters
+    if len(base_trimmed) < len(base):
+        diff = len(base) - len(base_trimmed)
+        base_trimmed += base[:diff]
+        font_trimmed += font_map[:diff]
+
+    trans = str.maketrans(base_trimmed, font_trimmed)
     return text.translate(trans)
 
 
@@ -2909,6 +2914,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
