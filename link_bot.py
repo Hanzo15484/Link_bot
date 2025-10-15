@@ -2649,6 +2649,98 @@ async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYP
         )
     else:
         await message.reply_text("⚠️ This forwarded message is not from a channel.")
+
+# --- Escape MarkdownV2 ---
+def escape_md(text: str) -> str:
+    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
+
+# --- Font conversion ---
+def convert_font(text, style):
+    base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    fonts = {
+        "bold": "𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙",
+        "italic": "𝑎𝑏𝑐𝑑𝑒𝑓𝑔ℎ𝑖𝑗𝑘𝑙𝑚𝑛𝑜𝑝𝑞𝑟𝑠𝑡𝑢𝑣𝑤𝑥𝑦𝑧𝐴𝐵𝐶𝐷𝐸𝐹𝐺𝐻𝐼𝐽𝐾𝐿𝑀𝑁𝑂𝑃𝑄𝑅𝑆𝑇𝑈𝑉𝑊𝑋𝑌𝑍",
+        "cursive": "𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩",
+        "fancy": "𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ",
+        "typewriter": "𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉",
+        "box": "🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩",
+        "smallcaps": "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀꜱᴛᴜᴠᴡxʏᴢABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "double": "𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ",
+        "script": "𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒽𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵",
+        "bracket": "【ａ】【ｂ】【ｃ】【ｄ】【ｅ】【ｆ】【ｇ】【ｈ】【ｉ】【ｊ】【ｋ】【ｌ】【ｍ】【ｎ】【ｏ】【ｐ】【ｑ】【ｒ】【ｓ】【ｔ】【ｕ】【ｖ】【ｗ】【ｘ】【ｙ】【ｚ】【Ａ】【Ｂ】【Ｃ】【Ｄ】【Ｅ】【Ｆ】【Ｇ】【Ｈ】【Ｉ】【Ｊ】【Ｋ】【Ｌ】【Ｍ】【Ｎ】【Ｏ】【Ｐ】【Ｑ】【Ｒ】【Ｓ】【Ｔ】【Ｕ】【Ｖ】【Ｗ】【Ｘ】【Ｙ】【Ｚ】"
+    }
+    return text.translate(str.maketrans(base, fonts.get(style, base)))
+
+# --- /font command ---
+async def font_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    preview_text = "Example"
+    styles = [
+        ("Bold", "bold"), ("Italic", "italic"), ("Cursive", "cursive"),
+        ("Fancy", "fancy"), ("Typewriter", "typewriter"), ("🅑🅞🅧 Style", "box"),
+        ("Small Caps", "smallcaps"), ("Double-Struck", "double"),
+        ("Script", "script"), ("【Bracket】", "bracket")
+    ]
+
+    preview_lines = ["🎨 *Choose a font style:*", ""]
+    for name, style in styles:
+        preview = escape_md(convert_font(preview_text, style))
+        preview_lines.append(f"*{escape_md(name)}:* `{preview}`")
+
+    preview_text_md = "\n".join(preview_lines)
+
+    keyboard = [
+        [InlineKeyboardButton(name, callback_data=f"font:{style}")]
+        for name, style in styles
+    ]
+
+    await update.message.reply_text(
+        preview_text_md,
+        reply_markup=InlineKeyboardMarkup(keyboard),
+        parse_mode="MarkdownV2"
+    )
+
+# --- Font selection ---
+async def font_style_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    style = query.data.split(":")[1]
+    context.user_data["selected_font"] = style
+
+    await query.message.delete()
+    msg = await query.message.reply_text(
+        "✍️ *Now send me the text that you want to change into selected font style:*",
+        parse_mode="MarkdownV2"
+    )
+    context.user_data["waiting_for_text"] = msg.message_id
+
+# --- Text handler ---
+async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if "selected_font" not in context.user_data:
+        return
+
+    style = context.user_data["selected_font"]
+    if "waiting_for_text" in context.user_data:
+        try:
+            await update.message.chat.delete_message(context.user_data["waiting_for_text"])
+        except:
+            pass
+
+    await update.message.delete()
+    waiting_msg = await update.message.reply_text("⏳ *Please wait...*", parse_mode="MarkdownV2")
+    await asyncio.sleep(1)
+    await waiting_msg.delete()
+
+    converted = convert_font(update.message.text, style)
+    converted_escaped = escape_md(converted)
+
+    await update.message.reply_text(
+        f"✅ *Converted text:*\n\n`{converted_escaped}`",
+        parse_mode="MarkdownV2"
+    )
+
+    context.user_data.clear()
+    
 #main
 def main():
     """Start the bot."""
@@ -2681,7 +2773,7 @@ def main():
     application.add_handler(CommandHandler("settings", settings_command))
     application.add_handler(CommandHandler("admins", admins_command))
     application.add_handler(CommandHandler("users", users_command))
-    
+    application.add_handler(CommandHandler("font", font_command))
     # Owner commands
     application.add_handler(CommandHandler("auth", auth_user))
     application.add_handler(CommandHandler("deauth", deauth_user))
@@ -2701,6 +2793,10 @@ def main():
     #Channels Button Handlers 
     application.add_handler(CallbackQueryHandler(button_handler_channels, pattern="^(get_channels|get_settings|back_channels|close_channels)$"))
 
+    #font 
+    application.add_handler(CallbackQueryHandler(font_style_selected, pattern=r"^font:")
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text),
+    group=3)
     #Forward
     application.add_handler(MessageHandler(filters.FORWARDED, forwarded_channel_id))
     
@@ -2801,6 +2897,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
