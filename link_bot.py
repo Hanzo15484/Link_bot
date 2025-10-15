@@ -2749,7 +2749,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     converted_escaped = escape_md(converted)
 
     await update.message.reply_text(
-        f"✅ *Converted text:*\n```\n{converted_escaped}\n```",
+        f"✅ *Converted text:\n`{converted_escaped}`",
         parse_mode="MarkdownV2"
     )
 
@@ -2911,6 +2911,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
