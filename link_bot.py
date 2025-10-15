@@ -2655,6 +2655,9 @@ def escape_md(text: str) -> str:
     escape_chars = r'_*[]()~`>#+-=|{}.!'
     return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
 
+def escape_md_code(text: str) -> str:
+    # Only escape backticks ` inside code block
+    return text.replace('`', '\\`')
 # --- Font conversion ---
 def convert_font(text, style):
     base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -2749,7 +2752,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await waiting_msg.delete()
 
     converted = convert_font(update.message.text, style)
-    converted_escaped = escape_md(converted)
+    converted_escaped = escape_md_code(converted)
 
     await update.message.reply_text(
         f"✅ *Converted text:*\n\n`{converted_escaped}`",
@@ -2914,6 +2917,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
