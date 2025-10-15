@@ -2658,6 +2658,7 @@ def escape_md(text: str) -> str:
 # --- Font conversion ---
 def convert_font(text, style):
     base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
     fonts = {
         "bold": "𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙",
         "italic": "𝑎𝑏𝑐𝑑𝑒𝑓𝑔ℎ𝑖𝑗𝑘𝑙𝑚𝑛𝑜𝑝𝑞𝑟𝑠𝑡𝑢𝑣𝑤𝑥𝑦𝑧𝐴𝐵𝐶𝐷𝐸𝐹𝐺𝐻𝐼𝐽𝐾𝐿𝑀𝑁𝑂𝑃𝑄𝑅𝑆𝑇𝑈𝑉𝑊𝑋𝑌𝑍",
@@ -2670,7 +2671,18 @@ def convert_font(text, style):
         "script": "𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒽𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵",
         "bracket": "【ａ】【ｂ】【ｃ】【ｄ】【ｅ】【ｆ】【ｇ】【ｈ】【ｉ】【ｊ】【ｋ】【ｌ】【ｍ】【ｎ】【ｏ】【ｐ】【ｑ】【ｒ】【ｓ】【ｔ】【ｕ】【ｖ】【ｗ】【ｘ】【ｙ】【ｚ】【Ａ】【Ｂ】【Ｃ】【Ｄ】【Ｅ】【Ｆ】【Ｇ】【Ｈ】【Ｉ】【Ｊ】【Ｋ】【Ｌ】【Ｍ】【Ｎ】【Ｏ】【Ｐ】【Ｑ】【Ｒ】【Ｓ】【Ｔ】【Ｕ】【Ｖ】【Ｗ】【Ｘ】【Ｙ】【Ｚ】"
     }
-    return text.translate(str.maketrans(base, fonts.get(style, base)))
+
+    font_map = fonts.get(style, base)
+
+    # ensure equal length
+    if len(font_map) != len(base):
+        # fallback: zip only for common length
+        trans = str.maketrans(base[:len(font_map)], font_map)
+    else:
+        trans = str.maketrans(base, font_map)
+
+    return text.translate(trans)
+
 
 # --- /font command ---
 async def font_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2897,6 +2909,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
