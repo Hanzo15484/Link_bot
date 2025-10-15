@@ -2746,12 +2746,12 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await waiting_msg.delete()
 
     converted = convert_font(update.message.text, style)
-    converted_escaped = escape_md(converted)
 
     await update.message.reply_text(
-        f"✅ *Converted text:\n`{converted_escaped}`",
-        parse_mode="MarkdownV2"
-    )
+    f"✅ Converted text:\n<code>{converted}</code>",
+    parse_mode="HTML"
+)
+    
 
     context.user_data.clear()
     
@@ -2911,6 +2911,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
