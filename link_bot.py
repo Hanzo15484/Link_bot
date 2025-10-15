@@ -2794,7 +2794,7 @@ def main():
     application.add_handler(CallbackQueryHandler(button_handler_channels, pattern="^(get_channels|get_settings|back_channels|close_channels)$"))
 
     #font 
-    application.add_handler(CallbackQueryHandler(font_style_selected, pattern=r"^font:")
+    application.add_handler(CallbackQueryHandler(font_style_selected, pattern=r"^font:"))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text),
     group=3)
     #Forward
@@ -2897,6 +2897,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
