@@ -2652,6 +2652,11 @@ async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 # --- Font conversion ---
+def escape_md(text: str) -> str:
+    # Escape all special MarkdownV2 characters
+    escape_chars = r'_*[]()~`>#+-=|{}.!'
+    return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
+    
 def convert_font(text, style):
     base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -2741,7 +2746,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     converted = convert_font(update.message.text, style)
 
     await update.message.reply_text(
-        f"✅ <bold>Converted text:</bold>\n<code>{converted_escaped}</code>",
+        f"✅ <bold>Converted text:</bold>\n<code>{converted}</code>",
         parse_mode="HTML"
     )
 
@@ -2905,6 +2910,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
