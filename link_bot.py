@@ -2652,13 +2652,6 @@ async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYP
 
 
 # --- Font conversion ---
-import re
-
-def escape_md(text: str) -> str:
-    # Escape ALL MarkdownV2 reserved characters
-    escape_chars = r'_*\[\]()~`>#+-=|{}.!'
-    return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
-    
 def convert_font(text, style):
     base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
@@ -2672,21 +2665,19 @@ def convert_font(text, style):
         "smallcaps": "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀꜱᴛᴜᴠᴡxʏᴢABCDEFGHIJKLMNOPQRSTUVWXYZ",
         "double": "𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ",
         "script": "𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒽𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵",
-        "bracket": "【ａ】【ｂ】【ｃ】【ｄ】【ｅ】【ｆ】【ｇ】【ｈ】【ｉ】【ｊ】【ｋ】【ｌ】【ｍ】【ｎ】【ｏ】【ｐ】【ｑ】【ｒ】【ｓ】【ｔ】【ｕ】【ｖ】【ｗ】【ｘ】【ｙ】【ｚ】【Ａ】【Ｂ】【Ｃ】【Ｄ】【Ｅ】【Ｆ】【Ｇ】【Ｈ】【Ｉ】【Ｊ】【Ｋ】【Ｌ】【Ｍ】【Ｎ】【Ｏ】【Ｐ】【Ｑ】【Ｒ】【Ｓ】【Ｔ】【Ｕ】【Ｖ】【Ｗ】【Ｘ】【Ｙ】【Ｚ",
+        "bracket": "【ａ】【ｂ】【ｃ】【ｄ】【ｅ】【ｆ】【ｇ】【ｈ】【ｉ】【ｊ】【ｋ】【ｌ】【ｍ】【ｎ】【ｏ】【ｐ】【ｑ】【ｒ】【ｓ】【ｔ】【ｕ】【ｖ】【ｗ】【ｘ】【ｙ】【ｚ】【Ａ】【Ｂ】【Ｃ】【Ｄ】【Ｅ】【Ｆ】【Ｇ】【Ｈ】【Ｉ】【Ｊ】【Ｋ】【Ｌ】【Ｍ】【Ｎ】【Ｏ】【Ｐ】【Ｑ】【Ｒ】【Ｓ】【Ｔ】【Ｕ】【Ｖ】【Ｗ】【Ｘ】【Ｙ】【Ｚ】"
     }
 
     font_map = fonts.get(style, base)
-    # make sure length matches
-    min_len = min(len(base), len(font_map))
-    base_trimmed = base[:min_len]
-    font_trimmed = font_map[:min_len]
 
-    trans = str.maketrans(base_trimmed, font_trimmed)
+    # ensure equal length
+    if len(font_map) != len(base):
+        # fallback: zip only for common length
+        trans = str.maketrans(base[:len(font_map)], font_map)
+    else:
+        trans = str.maketrans(base, font_map)
+
     return text.translate(trans)
-
-# --- escape backticks only for MarkdownV2 code block ---
-def escape_md_code(text: str) -> str:
-    return text.replace('`', '\\`')
 
 # --- /font command ---
 async def font_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2700,12 +2691,15 @@ async def font_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     preview_lines = ["🎨 *Choose a font style:*", ""]
     for name, style in styles:
-        preview = escape_md_code(convert_font(preview_text, style))
-        preview_lines.append(f"*{name}:* `{preview}`")
+        preview = escape_md(convert_font(preview_text, style))
+        preview_lines.append(f"*{escape_md(name)}:* `{preview}`")
 
     preview_text_md = "\n".join(preview_lines)
 
-    keyboard = [[InlineKeyboardButton(name, callback_data=f"font:{style}")] for name, style in styles]
+    keyboard = [
+        [InlineKeyboardButton(name, callback_data=f"font:{style}")]
+        for name, style in styles
+    ]
 
     await update.message.reply_text(
         preview_text_md,
@@ -2713,7 +2707,7 @@ async def font_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="MarkdownV2"
     )
 
-# --- font button callback ---
+# --- Font selection ---
 async def font_style_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -2727,20 +2721,19 @@ async def font_style_selected(update: Update, context: ContextTypes.DEFAULT_TYPE
     )
     context.user_data["waiting_for_text"] = msg.message_id
 
-# --- handle user text ---
+# --- Text handler ---
 async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if "selected_font" not in context.user_data:
         return
 
     style = context.user_data["selected_font"]
-
-    # delete "send me text" message
     if "waiting_for_text" in context.user_data:
-        try: await update.message.chat.delete_message(context.user_data["waiting_for_text"])
-        except: pass
+        try:
+            await update.message.chat.delete_message(context.user_data["waiting_for_text"])
+        except:
+            pass
 
     await update.message.delete()
-
     waiting_msg = await update.message.reply_text("⏳ *Please wait...*", parse_mode="MarkdownV2")
     await asyncio.sleep(1)
     await waiting_msg.delete()
@@ -2748,12 +2741,13 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     converted = convert_font(update.message.text, style)
 
     await update.message.reply_text(
-    f"✅ Converted text:\n<code>{converted}</code>",
-    parse_mode="HTML"
-)
-    
+        f"✅ <bold>Converted text:</bold>\n<code>{converted_escaped}</code>",
+        parse_mode="HTML"
+    )
 
     context.user_data.clear()
+                              
+    
     
 #main
 def main():
@@ -2911,6 +2905,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
