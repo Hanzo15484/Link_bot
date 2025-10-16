@@ -2744,9 +2744,9 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await asyncio.sleep(1)
     await waiting_msg.delete()
 
-    converted = convert_font(update.message.text, style)
+      converted = convert_font(update.message.text, style)
     if use_markdown:
-    converted_escaped = escape_md(converted)
+      converted_escaped = escape_md(converted)
     await update.message.reply_text(
         f"✅ Converted text:\n`{converted_escaped}`",
         parse_mode="MarkdownV2"
@@ -2917,6 +2917,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
