@@ -2732,10 +2732,6 @@ async def handle_font_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"✅ Converted text:\n<code>{converted}</code>",
         parse_mode="HTML"
      )
-context.user_data.clear()
-                              
-    
-    
 #main
 def main():
     """Start the bot."""
@@ -2892,6 +2888,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
