@@ -2732,8 +2732,7 @@ async def handle_font_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"✅ Converted text:\n<code>{converted}</code>",
         parse_mode="HTML"
      )
-
-     context.user_data.clear()
+context.user_data.clear()
                               
     
     
@@ -2893,6 +2892,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
