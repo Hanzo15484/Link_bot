@@ -2651,113 +2651,89 @@ async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYP
         await message.reply_text("⚠️ This forwarded message is not from a channel.")
 
 
-# --- Font conversion ---
-def escape_md(text: str) -> str:
-    # Escape all special MarkdownV2 characters
-    escape_chars = r'_*[]()~`>#+-=|{}.!'
-    return re.sub(f'([{re.escape(escape_chars)}])', r'\\\1', text)
-    
+# Define base alphabet for conversion
+base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+# Define font maps (same length as base)
+fonts = {
+    "Bold": "𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘶𝘷𝘄𝘅𝘆𝘇𝗔𝗕𝗖𝗗𝗘𝗙𝗚𝗛𝗜𝗝𝗞𝗟𝗠𝗡𝗢𝗣𝗤𝗥𝗦𝗧𝗨𝗩𝗪𝗫𝗬𝗭",
+    "Italic": "𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻𝘈𝘉𝘊𝘋𝘌𝘍𝘎𝘏𝘐𝘑𝘒𝘓𝘔𝘕𝘖𝘗𝘘𝘙𝘚𝘛𝘜𝘝𝘞𝘟𝘠𝘡",
+    "Script": "𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩",
+    "Double-struck": "𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ",
+    "Small caps": "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "Box": "🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩",
+    "Brackets": "【a】【b】【c】【d】【e】【f】【g】【h】【i】【j】【k】【l】【m】【n】【o】【p】【q】【r】【s】【t】【u】【v】【w】【x】【y】【z】【A】【B】【C】【D】【E】【F】【G】【H】【I】【J】【K】【L】【M】【N】【O】【P】【Q】【R】【S】【T】【U】【V】【W】【X】【Y】【Z】",
+}
+
+# Temporary store user’s selected font
+user_font_selection = {}
+
 def convert_font(text, style):
-    base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-    fonts = {
-        "bold": "𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳𝐀𝐁𝐂𝐃𝐄𝐅𝐆𝐇𝐈𝐉𝐊𝐋𝐌𝐍𝐎𝐏𝐐𝐑𝐒𝐓𝐔𝐕𝐖𝐗𝐘𝐙",
-        "italic": "𝑎𝑏𝑐𝑑𝑒𝑓𝑔ℎ𝑖𝑗𝑘𝑙𝑚𝑛𝑜𝑝𝑞𝑟𝑠𝑡𝑢𝑣𝑤𝑥𝑦𝑧𝐴𝐵𝐶𝐷𝐸𝐹𝐺𝐻𝐼𝐽𝐾𝐿𝑀𝑁𝑂𝑃𝑄𝑅𝑆𝑇𝑈𝑉𝑊𝑋𝑌𝑍",
-        "cursive": "𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃𝓐𝓑𝓒𝓓𝓔𝓕𝓖𝓗𝓘𝓙𝓚𝓛𝓜𝓝𝓞𝓟𝓠𝓡𝓢𝓣𝓤𝓥𝓦𝓧𝓨𝓩",
-        "fancy": "𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ",
-        "typewriter": "𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣𝙰𝙱𝙲𝙳𝙴𝙵𝙶𝙷𝙸𝙹𝙺𝙻𝙼𝙽𝙾𝙿𝚀𝚁𝚂𝚃𝚄𝚅𝚆𝚇𝚈𝚉",
-        "box": "🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉",
-        "smallcaps": "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘǫʀꜱᴛᴜᴠᴡxʏᴢABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "double": "𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫𝔸𝔹ℂ𝔻𝔼𝔽𝔾ℍ𝕀𝕁𝕂𝕃𝕄ℕ𝕆ℙℚℝ𝕊𝕋𝕌𝕍𝕎𝕏𝕐ℤ",
-        "script": "𝒶𝒷𝒸𝒹ℯ𝒻ℊ𝒽𝒾𝒿𝓀𝓁𝓂𝓃ℴ𝓅𝓆𝓇𝓈𝓉𝓊𝓋𝓌𝓍𝓎𝓏𝒜ℬ𝒞𝒟ℰℱ𝒢ℋℐ𝒥𝒦ℒℳ𝒩𝒪𝒫𝒬ℛ𝒮𝒯𝒰𝒱𝒲𝒳𝒴𝒵",
-        "bracket": "【ａ】【ｂ】【ｃ】【ｄ】【ｅ】【ｆ】【ｇ】【ｈ】【ｉ】【ｊ】【ｋ】【ｌ】【ｍ】【ｎ】【ｏ】【ｐ】【ｑ】【ｒ】【ｓ】【ｔ】【ｕ】【ｖ】【ｗ】【ｘ】【ｙ】【ｚ】【Ａ】【Ｂ】【Ｃ】【Ｄ】【Ｅ】【Ｆ】【Ｇ】【Ｈ】【Ｉ】【Ｊ】【Ｋ】【Ｌ】【Ｍ】【Ｎ】【Ｏ】【Ｐ】【Ｑ】【Ｒ】【Ｓ】【Ｔ】【Ｕ】【Ｖ】【Ｗ】【Ｘ】【Ｙ】【Ｚ】"
-    }
-
     font_map = fonts.get(style, base)
-
-    # Trim or pad font_map to exactly match base length (52 chars)
+    # Adjust lengths for maketrans
     if len(font_map) < len(base):
         font_map += font_map[-1] * (len(base) - len(font_map))
     elif len(font_map) > len(base):
         font_map = font_map[:len(base)]
-
-    # Safe translation
     trans = str.maketrans(base, font_map)
     return text.translate(trans)
 
-# --- /font command ---
 async def font_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    preview_text = "Example"
-    styles = [
-        ("Bold", "bold"), ("Italic", "italic"), ("Cursive", "cursive"),
-        ("Fancy", "fancy"), ("Typewriter", "typewriter"), ("🅑🅞🅧 Style", "box"),
-        ("Small Caps", "smallcaps"), ("Double-Struck", "double"),
-        ("Script", "script"), ("【Bracket】", "bracket")
-    ]
-
-    preview_lines = ["🎨 *Choose a font style:*", ""]
-    for name, style in styles:
-        preview = escape_md(convert_font(preview_text, style))
-        preview_lines.append(f"*{escape_md(name)}:* `{preview}`")
-
-    preview_text_md = "\n".join(preview_lines)
-
     keyboard = [
-        [InlineKeyboardButton(name, callback_data=f"font:{style}")]
-        for name, style in styles
+        [InlineKeyboardButton(name, callback_data=f"font_{name}")]
+        for name in fonts.keys()
     ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
 
     await update.message.reply_text(
-        preview_text_md,
-        reply_markup=InlineKeyboardMarkup(keyboard),
-        parse_mode="MarkdownV2"
+        "✨ *Choose a font style:*",
+        parse_mode="MarkdownV2",
+        reply_markup=reply_markup
     )
 
-# --- Font selection ---
-async def font_style_selected(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def font_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    style = query.data.split(":")[1]
-    context.user_data["selected_font"] = style
 
-    await query.message.delete()
-    msg = await query.message.reply_text(
-        "✍️ *Now send me the text that you want to change into selected font style:*",
+    style = query.data.replace("font_", "")
+    user_font_selection[query.from_user.id] = style
+
+    try:
+        await query.message.delete()
+    except:
+        pass
+
+    await query.message.reply_text(
+        f"✍️ Now send the text you want to convert into *{style}* font:",
         parse_mode="MarkdownV2"
     )
-    context.user_data["waiting_for_text"] = msg.message_id
 
-# --- Text handler ---
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if "selected_font" not in context.user_data:
-        return
+async def handle_font_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.effective_user.id
+    if user_id not in user_font_selection:
+        return  # Ignore unrelated messages
 
-    style = context.user_data["selected_font"]
-    if "waiting_for_text" in context.user_data:
-        try:
-            await update.message.chat.delete_message(context.user_data["waiting_for_text"])
-        except:
-            pass
+    style = user_font_selection[user_id]
+    del user_font_selection[user_id]  # Reset after use
 
-    await update.message.delete()
-    waiting_msg = await update.message.reply_text("⏳ *Please wait...*", parse_mode="MarkdownV2")
-    await asyncio.sleep(1)
-    await waiting_msg.delete()
+    # Delete user's message and send "Please wait..."
+    try:
+        await update.message.delete()
+    except:
+        pass
 
-      converted = convert_font(update.message.text, style)
-    if use_markdown:
-      converted_escaped = escape_md(converted)
-    await update.message.reply_text(
-        f"✅ Converted text:\n`{converted_escaped}`",
-        parse_mode="MarkdownV2"
-    )
-else:
-    await update.message.reply_text(
+    msg = await update.message.chat.send_message("⏳ Please wait...")
+    await asyncio.sleep(1.5)
+    await msg.delete()
+
+    converted = convert_font(update.message.text, style)
+
+    await update.message.chat.send_message(
         f"✅ Converted text:\n<code>{converted}</code>",
         parse_mode="HTML"
-)
-    
-    context.user_data.clear()
+     )
+
+     context.user_data.clear()
                               
     
     
@@ -2917,6 +2893,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
