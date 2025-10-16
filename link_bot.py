@@ -2787,7 +2787,7 @@ def main():
     #font 
     application.add_handler(CallbackQueryHandler(font_callback, pattern=r"^font:"))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_font_text),
-    group=3)
+    group=2)
     #Forward
     application.add_handler(MessageHandler(filters.FORWARDED, forwarded_channel_id))
     
@@ -2888,6 +2888,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
