@@ -2703,7 +2703,7 @@ async def font_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except:
         pass
 
-    await query.message.reply_text(
+    await update.callback_query.message.reply_text(
         f"✍️ Now send the text you want to convert into *{style}* font:",
         parse_mode="MarkdownV2"
     )
@@ -2888,6 +2888,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
