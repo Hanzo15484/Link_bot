@@ -2732,6 +2732,20 @@ async def handle_font_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"✅ Converted text:\n<code>{converted}</code>",
         parse_mode="HTML"
      )
+
+#request accept
+async def accept_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.effective_chat.id
+    pending_requests = await context.bot.get_chat(chat_id).get_pending_join_requests()
+    
+    if not pending_requests:
+        await update.message.reply_text("No pending join requests!")
+        return
+
+    for user_request in pending_requests:
+        await context.bot.approve_chat_join_request(chat_id, user_request.user.id)
+    
+    await update.message.reply_text(f"Approved {len(pending_requests)} join requests!")
 #main
 def main():
     """Start the bot."""
@@ -2765,6 +2779,7 @@ def main():
     application.add_handler(CommandHandler("admins", admins_command))
     application.add_handler(CommandHandler("users", users_command))
     application.add_handler(CommandHandler("font", font_command))
+    application.add_handler(CommandHandler("accept_all", accept_all))
     # Owner commands
     application.add_handler(CommandHandler("auth", auth_user))
     application.add_handler(CommandHandler("deauth", deauth_user))
@@ -2888,6 +2903,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
