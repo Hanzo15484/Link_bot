@@ -199,7 +199,7 @@ reactions = [ "🎉", "😎", "🥰", "⚡", "❤‍🔥", "🤩"]
 async def add_temporary_reaction(update: Update):
     reaction = random.choice(reactions)
     await update.message.set_reaction([ReactionTypeEmoji(emoji=reaction)])
-    await asyncio.sleep(3.5)
+    await asyncio.sleep(0.3)
     await update.message.set_reaction([])
     
 async def save_data(data):
@@ -2905,6 +2905,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
