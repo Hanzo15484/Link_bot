@@ -201,8 +201,6 @@ async def add_temporary_reaction(update: Update):
     await update.message.set_reaction([ReactionTypeEmoji(emoji=reaction)])
     await asyncio.sleep(3.5)
     await update.message.set_reaction([])
-except Exception as e:
-    print("Reaction error: {e}")
     
 async def save_data(data):
     """Save data to JSON file asynchronously and update cache."""
@@ -2907,6 +2905,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
