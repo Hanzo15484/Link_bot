@@ -199,6 +199,10 @@ reactions = [ "🎉", "😎", "🥰", "⚡", "❤‍🔥", "🤩"]
 async def add_temporary_reaction(update: Update):
     reaction = random.choice(reactions)
     await update.message.set_reaction([ReactionTypeEmoji(emoji=reaction)])
+    await asyncio.sleep(3.5)
+    await update.message.set_reaction([])
+except Exception as e:
+    print("Reaction error: {e}")
     
 async def save_data(data):
     """Save data to JSON file asynchronously and update cache."""
@@ -1467,7 +1471,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     
             await add_temporary_reaction(update)
             wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
-            await asyncio.sleep(3.5)
+            await asyncio.sleep(0.3)
             await wait_msg.delete()
             
             # Create inline button with the channel link
@@ -2903,6 +2907,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
