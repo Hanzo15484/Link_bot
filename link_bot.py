@@ -1467,7 +1467,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     
             await add_temporary_reaction(update)
             wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
-            await asyncio.sleep(0.4)
+            await asyncio.sleep(3.5)
             await wait_msg.delete()
             
             # Create inline button with the channel link
@@ -2903,6 +2903,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
