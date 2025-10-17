@@ -49,6 +49,8 @@ GITHUB_REPO = "Hanzo15484/link_bot.py"
 # JSON storage file
 JSON_STORAGE = "channel_data.json"
 SETTINGS_STORAGE = "bot_settings.json"
+CONFIG_FILE = "config.json"
+ASK_IMAGE = range(1)
 #Log 
 LOG_FILE = "bot.log"
 
@@ -200,7 +202,41 @@ async def add_temporary_reaction(update: Update):
     reaction = random.choice(reactions)
     await update.message.set_reaction([ReactionTypeEmoji(emoji=reaction)])
     await asyncio.sleep(0.2)
+
+# --- Utility: Load/Save file_id ---
+def get_wait_image():
+    try:
+        with open(CONFIG_FILE, "r") as f:
+            data = json.load(f)
+            return data.get("wait_image")
+    except FileNotFoundError:
+        return None
+
+
+def save_wait_image(file_id):
+    with open(CONFIG_FILE, "w") as f:
+        json.dump({"wait_image": file_id}, f)
+
+
+# --- /add_img command ---
+async def add_img(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("📸 Please send the image you want to use for ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
+    return ASK_IMAGE
+
+
+async def receive_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    photo = update.message.photo[-1]
+    file_id = photo.file_id
+    save_wait_image(file_id)
+    await update.message.reply_text("✅ Image saved successfully! It will now be used for ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
+    return ConversationHandler.END
+
+
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("❌ Cancelled.")
+    return ConversationHandler.END
     
+
 async def save_data(data):
     """Save data to JSON file asynchronously and update cache."""
     global BOT_CACHE
@@ -1467,9 +1503,17 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     return
                     
             await add_temporary_reaction(update)
-            wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
-            await asyncio.sleep(0.3)
-            await wait_msg.delete()
+            wait_image = get_wait_image()
+
+      if wait_image:
+            wait_msg = await update.message.reply_photo(
+            photo=wait_image,
+            caption="ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...."
+        )
+      else:
+           wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
+           await asyncio.sleep(0.3)
+           await wait_msg.delete()
             
             # Create inline button with the channel link
             keyboard = [
@@ -2904,6 +2948,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
