@@ -1516,7 +1516,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
            await wait_msg.delete()
             
             # Create inline button with the channel link
-            keyboard = [
+        keyboard = [
                 [InlineKeyboardButton("• ᴄʟɪᴄᴋ ʜᴇʀᴇ ᴛᴏ ᴊᴏɪɴ ɴᴏᴡ •", url=link_data["invite_link"])]
             ]
             reply_markup = InlineKeyboardMarkup(keyboard)
@@ -2948,6 +2948,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
