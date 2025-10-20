@@ -1510,7 +1510,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             photo=wait_image,
             caption="ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...."
         )
-      else:
+    else:
            wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
            await asyncio.sleep(0.3)
            await wait_msg.delete()
@@ -2948,6 +2948,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
