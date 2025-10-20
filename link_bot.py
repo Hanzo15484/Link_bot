@@ -1526,7 +1526,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Schedule message cleanup
     asyncio.create_task(cleanup_message(context, update.effective_chat.id, message.message_id))
     else:
-       await start_callback(update, context)
+      await start_callback(update, context)
 #help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message with help information."""
@@ -2938,6 +2938,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
