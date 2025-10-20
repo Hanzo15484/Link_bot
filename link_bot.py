@@ -1511,10 +1511,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
            [InlineKeyboardButton("• ᴄʟɪᴄᴋ ʜᴇʀᴇ ᴛᴏ ᴊᴏɪɴ ɴᴏᴡ •", url=link_data["invite_link"])]
        ]
-           reply_markup = InlineKeyboardMarkup(keyboard)
-           message = await update.message.reply_text(  
+          reply_markup = InlineKeyboardMarkup(keyboard)
+          message = await update.message.reply_text(  
             f"ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ʙʏ ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ:",  
-            reply_markup=reply_markup  
+          reply_markup=reply_markup  
         )  
           
         message = await update.message.reply_text(  
@@ -2938,6 +2938,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
