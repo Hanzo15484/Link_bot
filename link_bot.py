@@ -1509,12 +1509,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await wait_msg.delete()
        # Create inline button with the channel link
         keyboard = [
-           [InlineKeyboardButton("Click here to join now", url=link_data["invite_link"])]
+           [InlineKeyboardButton("• ᴄʟɪᴄᴋ ʜᴇʀᴇ ᴛᴏ ᴊᴏɪɴ ɴᴏᴡ •", url=link_data["invite_link"])]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
             
         message = await update.message.reply_text(
-                f"Join the channel by clicking the button below:",
+                f"ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ʙʏ ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ:",
                 reply_markup=reply_markup
             )
             
@@ -1524,11 +1524,11 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
         # Schedule message cleanup
-    asyncio.create_task(cleanup_message(context, update.effective_chat.id, message.message_id))
-    """else:
-       await start_callback(update, context)
-   else:
-      await update.message.reply_text("Please use this bot in private messages.")"""
+          asyncio.create_task(cleanup_message(context, update.effective_chat.id, message.message_id))
+        else:
+            await start_callback(update, context)
+    else:
+        await update.message.reply_text("Please use this bot in private messages.")
 #help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message with help information."""
@@ -2940,6 +2940,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
