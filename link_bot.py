@@ -1528,8 +1528,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     update.effective_chat.id, message.message_id))
     else:
        await start_callback(update, context)
-   else:
-      await update.message.reply_text("Please use this bot in private messages.")
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message with help information."""
@@ -2941,6 +2939,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
