@@ -1505,7 +1505,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await add_temporary_reaction(update)
             wait_image = get_wait_image()
 
-      if wait_image:
+    if wait_image:
             wait_msg = await update.message.reply_photo(
             photo=wait_image,
             caption="ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...."
@@ -2948,6 +2948,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
