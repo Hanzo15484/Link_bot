@@ -1508,12 +1508,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await asyncio.sleep(0.3)
             await wait_msg.delete()
        # Create inline button with the channel link
-     keyboard = [
-                [InlineKeyboardButton("Click here to join now", url=link_data["invite_link"])]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
+        keyboard = [
+           [InlineKeyboardButton("Click here to join now", url=link_data["invite_link"])]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
             
-            message = await update.message.reply_text(
+        message = await update.message.reply_text(
                 f"Join the channel by clicking the button below:",
                 reply_markup=reply_markup
             )
@@ -2940,6 +2940,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
