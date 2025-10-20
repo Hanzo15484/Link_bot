@@ -1504,32 +1504,23 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     
             await add_temporary_reaction(update)
             wait_image = get_wait_image()
-
-if wait_image:
-    wait_msg = await update.message.reply_photo(
-        photo=wait_image,
-        caption="ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...."
-    )
-else:
-    wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
-    await asyncio.sleep(0.3)
-    await wait_msg.delete()
-
-    # Create inline button with the channel link
-    keyboard = [
-        [InlineKeyboardButton("• ᴄʟɪᴄᴋ ʜᴇʀᴇ ᴛᴏ ᴊᴏɪɴ ɴᴏᴡ •", url=link_data["invite_link"])]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
-    message = await update.message.reply_text(
-        f"ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ʙʏ ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙʟᴏᴡ:",
-        reply_markup=reply_markup
-    )
-    
-    message = await update.message.reply_text(
-        "> *ɴᴏᴛᴇ\\:* ᴛʜɪs ɪɴᴠɪᴛᴇ ʟɪɴᴋ ᴇxᴘɪʀᴇs ɪɴ 5 ᴍɪɴᴜᴛᴇs\\. ɪғ ɪᴛ ᴇxᴘɪʀᴇs, ᴊᴜsᴛ ᴄʟɪᴄᴋ ᴛʜᴇ ᴘᴏsᴛ ʟɪɴᴋ ᴀɢᴀɪɴ ᴛᴏ ɢᴇᴛ ᴀ ɴᴇᴡ ᴏɴᴇ\\.",
-        parse_mode="MarkdownV2"
-    )
+            wait_msg = await update.message.reply_text("ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ....")
+            await asyncio.sleep(0.3)
+            await wait_msg.delete()
+       # Create inline button with the channel link
+      keyboard = [
+           [InlineKeyboardButton("• ᴄʟɪᴄᴋ ʜᴇʀᴇ ᴛᴏ ᴊᴏɪɴ ɴᴏᴡ •", url=link_data["invite_link"])]
+      ]
+      reply_markup = InlineKeyboardMarkup(keyboard)
+       message = await update.message.reply_text(  
+            f"ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ʙʏ ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ:",  
+            reply_markup=reply_markup  
+        )  
+          
+        message = await update.message.reply_text(  
+           "> *ɴᴏᴛᴇ\\:* ᴛʜɪs ɪɴᴠɪᴛᴇ ʟɪɴᴋ ᴇxᴘɪʀᴇs ɪɴ 5 ᴍɪɴᴜᴛᴇs\\. ɪғ ɪᴛ ᴇxᴘɪʀᴇs, ᴊᴜsᴛ ᴄʟɪᴄᴋ ᴛʜᴇ ᴘᴏsᴛ ʟɪɴᴋ ᴀɢᴀɪɴ ᴛᴏ ɢᴇᴛ ᴀ ɴᴇᴡ ᴏɴᴇ\\.",  
+                    parse_mode="MarkdownV2"  
+        )
             # Schedule message cleanup
            asyncio.create_task(cleanup_message(context, update.effective_chat.id, message.message_id))
         else:
@@ -2947,6 +2938,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
