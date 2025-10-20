@@ -1505,7 +1505,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await add_temporary_reaction(update)
             wait_image = get_wait_image()
 
-    if wait_image:
+if wait_image:
     wait_msg = await update.message.reply_photo(
         photo=wait_image,
         caption="ᴘʟᴇᴀsᴇ ᴡᴀɪᴛ...."
@@ -1522,7 +1522,7 @@ else:
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     message = await update.message.reply_text(
-        f"ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ʙʏ ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ:",
+        f"ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ʙʏ ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙʟᴏᴡ:",
         reply_markup=reply_markup
     )
     
@@ -1530,6 +1530,7 @@ else:
         "> *ɴᴏᴛᴇ\\:* ᴛʜɪs ɪɴᴠɪᴛᴇ ʟɪɴᴋ ᴇxᴘɪʀᴇs ɪɴ 5 ᴍɪɴᴜᴛᴇs\\. ɪғ ɪᴛ ᴇxᴘɪʀᴇs, ᴊᴜsᴛ ᴄʟɪᴄᴋ ᴛʜᴇ ᴘᴏsᴛ ʟɪɴᴋ ᴀɢᴀɪɴ ᴛᴏ ɢᴇᴛ ᴀ ɴᴇᴡ ᴏɴᴇ\\.",
         parse_mode="MarkdownV2"
     )
+    
 
             # Schedule message cleanup
             asyncio.create_task(cleanup_message(context, update.effective_chat.id, message.message_id))
@@ -2948,6 +2949,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
