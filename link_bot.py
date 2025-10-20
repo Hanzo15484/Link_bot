@@ -1528,7 +1528,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     update.effective_chat.id, message.message_id))
     else:
        await start_callback(update, context)
-
+#help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message with help information."""
     await help_command_callback(update, context)
@@ -2939,6 +2939,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
