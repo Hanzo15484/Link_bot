@@ -1508,9 +1508,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await asyncio.sleep(0.3)
             await wait_msg.delete()
        # Create inline button with the channel link
-      keyboard = [
+        keyboard = [
            [InlineKeyboardButton("• ᴄʟɪᴄᴋ ʜᴇʀᴇ ᴛᴏ ᴊᴏɪɴ ɴᴏᴡ •", url=link_data["invite_link"])]
-      ]
+       ]
       reply_markup = InlineKeyboardMarkup(keyboard)
        message = await update.message.reply_text(  
             f"ᴊᴏɪɴ ᴛʜᴇ ᴄʜᴀɴɴᴇʟ ʙʏ ᴄʟɪᴄᴋɪɴɢ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ:",  
@@ -2938,6 +2938,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
