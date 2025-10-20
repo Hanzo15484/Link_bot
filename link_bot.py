@@ -1524,7 +1524,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
         # Schedule message cleanup
-         asyncio.create_task(cleanup_message(context, update.effective_chat.id, message.message_id))
+        asyncio.create_task(cleanup_message(context, update.effective_chat.id, message.message_id))
         """else:
             await start_callback(update, context)
     else:
@@ -2940,6 +2940,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
