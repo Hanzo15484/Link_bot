@@ -1524,8 +1524,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
             # Schedule message cleanup
- asyncio.create_task(cleanup_message(context, update.effective_chat.id, message.message_id))
-        else:
+          asyncio.create_task(cleanup_message(context, update.effective_chat.id, message.message_id))
+    else:
             await start_callback(update, context)
     else:
         await update.message.reply_text("Please use this bot in private messages.")
@@ -2940,6 +2940,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
