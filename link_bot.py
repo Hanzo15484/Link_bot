@@ -2801,6 +2801,7 @@ def main():
     .write_timeout(30)  
     .connect_timeout(20)
     .pool_timeout(20)
+    . concurrent_update(60)
     .build())
 
     # Add handlers
@@ -2904,7 +2905,7 @@ def main():
         if hasattr(application.updater, 'job_queue') and hasattr(application.updater.job_queue, 'scheduler'):
             application.updater.job_queue.scheduler.configure(
                 timezone="UTC",
-                max_workers=2  # Reduce worker threads for Termux
+                max_workers=4  # Reduce worker threads for Termux
             )
         # Check if we need to send restart confirmation
         data = await load_data()
@@ -2940,6 +2941,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
