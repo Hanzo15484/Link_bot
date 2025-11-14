@@ -2798,10 +2798,10 @@ def main():
     application = (Application.builder()
     .token(BOT_TOKEN)
     .read_timeout(15)
-    .write_timeout(30)  
+    .write_timeout(25)  
     .connect_timeout(20)
     .pool_timeout(20)
-    . concurrent_update(60)
+    .concurrent_updates(True)
     .build())
 
     # Add handlers
@@ -2941,6 +2941,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
