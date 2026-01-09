@@ -8,7 +8,7 @@ from config import LINK_DURATION, LIST_CHANNELS_PAGE_SIZE
 from database.operations import UserOperations, ChannelOperations, LinkOperations, SettingsOperations
 from utils.helpers import is_admin, extract_channel_info, generate_file_id
 from features.link_generator import generate_single_link, regenerate_channel_link
-from time import time
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -266,7 +266,11 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     from config import BOT_START_TIME
     from datetime import timedelta
     
-    start_time = time.time()
+    if BOT_START_TIME is None:
+        await update.message.reply_text("Bot start time not initialized.")
+        return
+    
+    start_time = time.time()  # This should work now
     
     # Send initial message
     msg = await context.bot.send_message(
@@ -297,7 +301,7 @@ async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ),
         parse_mode="Markdown"
     )
-
+    
 async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Get bot logs."""
     from config import OWNER_ID, LOG_FILE
@@ -331,4 +335,5 @@ async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     else:
         await update.message.reply_text("⚠️ Log file not found!")
+
 
