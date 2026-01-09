@@ -87,7 +87,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command callback for button navigation."""
     from telegram import InputMediaPhoto
-    import json  # Add this import
+    import json
     
     query = update.callback_query
     if query:
@@ -97,44 +97,79 @@ async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         message = update.message
     
     settings = SettingsOperations.get_settings()
-    start_settings = settings["start"]
+    start_settings = settings.get("start", {})
     
-    # Parse buttons from JSON string if needed
-    buttons = start_settings["buttons"]
+    # Parse buttons from database
+    buttons = start_settings.get("buttons", [])
     if isinstance(buttons, str):
-        buttons = json.loads(buttons)
+        try:
+            buttons = json.loads(buttons)
+        except:
+            buttons = []
     
     # Create inline keyboard from settings
     keyboard = []
     for row in buttons:
         keyboard_row = []
         for button in row:
-            if isinstance(button, dict) and button.get("url", "").startswith("callback:"):
-                callback_data = button["url"].replace("callback:", "")
-                keyboard_row.append(InlineKeyboardButton(button["text"], callback_data=callback_data))
-            elif isinstance(button, dict):
-                keyboard_row.append(InlineKeyboardButton(button["text"], url=button["url"]))
-        keyboard.append(keyboard_row)
+            if isinstance(button, dict):
+                text = button.get("text", "")
+                url = button.get("url", "")
+                if url and url.startswith("callback:"):
+                    callback_data = url.replace("callback:", "")
+                    keyboard_row.append(InlineKeyboardButton(text, callback_data=callback_data))
+                elif url:
+                    keyboard_row.append(InlineKeyboardButton(text, url=url))
+                else:
+                    keyboard_row.append(InlineKeyboardButton(text, callback_data="no_action"))
+        if keyboard_row:
+            keyboard.append(keyboard_row)
     
-    reply_markup = InlineKeyboardMarkup(keyboard)
+    reply_markup = InlineKeyboardMarkup(keyboard) if keyboard else None
     
-    # Send message with image and buttons
-    if query:
+    # Check if image exists in database
+    image_file_id = start_settings.get("image", "")
+    
+    if image_file_id:
         try:
-            await query.edit_message_text(
-                text=start_settings["text"],
-                reply_markup=reply_markup
-            )
-        except:
-            await query.edit_message_text(
-                text=start_settings["text"],
-                reply_markup=reply_markup
-            )
+            if query:
+                # For callback queries, try to edit with photo first
+                try:
+                    await query.edit_message_media(
+                        media=InputMediaPhoto(
+                            media=image_file_id,
+                            caption=start_settings.get("text", "Welcome!")
+                        ),
+                        reply_markup=reply_markup
+                    )
+                except:
+                    # If editing photo fails, fall back to text
+                    await query.edit_message_text(
+                        text=start_settings.get("text", "Welcome!"),
+                        reply_markup=reply_markup
+                    )
+            else:
+                # For new messages, send photo with caption
+                await message.reply_photo(
+                    photo=image_file_id,
+                    caption=start_settings.get("text", "Welcome!"),
+                    reply_markup=reply_markup
+                )
+        except Exception as e:
+            logger.error(f"Error sending start image: {e}")
+            # Fallback to text only
+            text_to_send = start_settings.get("text", "Welcome!")
+            if query:
+                await query.edit_message_text(text=text_to_send, reply_markup=reply_markup)
+            else:
+                await message.reply_text(text=text_to_send, reply_markup=reply_markup)
     else:
-        await message.reply_text(
-            text=start_settings["text"],
-            reply_markup=reply_markup
-        )
+        # No image, send text only
+        text_to_send = start_settings.get("text", "Welcome!")
+        if query:
+            await query.edit_message_text(text=text_to_send, reply_markup=reply_markup)
+        else:
+            await message.reply_text(text=text_to_send, reply_markup=reply_markup)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message with help information."""
@@ -212,4 +247,5 @@ async def gen_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     channel_input = context.args[0]
     await generate_single_link(update, context, channel_input)
+
 
