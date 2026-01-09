@@ -12,6 +12,61 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
+BOT_START_TIME = time.time()   # resets after every restart
+
+
+def format_uptime(seconds: float) -> str:
+    # Convert seconds → y,m,d,h,min,s
+    years, seconds = divmod(seconds, 31536000)   # 365 days
+    months, seconds = divmod(seconds, 2628000)   # 1 month avg
+    days, seconds = divmod(seconds, 86400)
+    hours, seconds = divmod(seconds, 3600)
+    minutes, seconds = divmod(seconds, 60)
+
+    parts = []
+    if years >= 1:
+        parts.append(f"{int(years)}y")
+    if months >= 1:
+        parts.append(f"{int(months)}m")
+    if days >= 1:
+        parts.append(f"{int(days)}d")
+
+    parts.append(f"{int(hours)}h")
+    parts.append(f"{int(minutes)}min")
+    parts.append(f"{int(seconds)}s")
+
+    return ", ".join(parts)
+
+
+async def ping_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    user = update.effective_user
+    start = time.time()
+
+    # Initial message
+    msg = await update.message.reply_text("*ᴘɪɴɢɪɴɢ...*", parse_mode="Markdown")
+
+    await asyncio.sleep(0.3)
+
+    end = time.time()
+    ping_ms = (end - start) * 1000
+    response_sec = end - start
+
+    uptime_sec = time.time() - BOT_START_TIME
+    uptime_text = format_uptime(uptime_sec)
+
+    text = (
+        f"🏓 <b>Pong!</b>\n\n"
+        f"<b>Ping:</b> {ping_ms:.2f} ms\n"
+        f"<b>Response Time:</b> {response_sec:.2f} s\n"
+        f"<b>Received Message In:</b> {response_sec:.2f} s\n"
+        f"<b>Uptime:</b> {uptime_text}\n\n"
+        f"<b>Pinged by:</b> <a href=\"tg://user?id={user.id}\">{user.full_name}</a>"
+    )
+
+    await msg.edit_text(text, parse_mode="HTML")
+    
 async def batch_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Generate links for all channels where bot is admin."""
     user_id = update.effective_user.id
@@ -316,46 +371,6 @@ async def users_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     await update.message.reply_text(message, reply_markup=reply_markup)
 
-async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Check bot uptime and responsiveness."""
-    from config import BOT_START_TIME
-    from datetime import timedelta
-    
-    if BOT_START_TIME is None:
-        await update.message.reply_text("Bot start time not initialized.")
-        return
-    
-    start_time = time.time()  # This should work now
-    
-    # Send initial message
-    msg = await context.bot.send_message(
-       chat_id=update.effective_chat.id,
-       text="⏳ Pinging..."
-    )
-    
-    # Calculate latency
-    end_time = time.time()
-    latency_ms = int((end_time - start_time) * 1000)
-
-    # Calculate uptime
-    uptime_sec = int(time.time() - BOT_START_TIME)
-    uptime_str = str(timedelta(seconds=uptime_sec))
-
-    # Delete "Pinging..." message
-    try:
-        await msg.delete()
-    except:
-        pass
-
-    await context.bot.send_message(
-        chat_id=update.effective_chat.id,
-        text=(
-            f"✅ **Pong!**\n"
-            f"📡 Latency: `{latency_ms} ms`\n"
-            f"⏱️ Uptime: `{uptime_str}`"
-        ),
-        parse_mode="Markdown"
-    )
     
 async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Get bot logs."""
@@ -390,6 +405,7 @@ async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     else:
         await update.message.reply_text("⚠️ Log file not found!")
+
 
 
 
