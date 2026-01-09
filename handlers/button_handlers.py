@@ -9,8 +9,8 @@ from config import SETTINGS_MAIN, SETTINGS_START, SETTINGS_START_TEXT, SETTINGS_
                   SETTINGS_HELP_ADD_BUTTON, SETTINGS_HELP_REMOVE_BUTTON, ABOUT, \
                   HELP_REQUIREMENTS, HELP_HOW, HELP_TROUBLESHOOT
 from database.operations import SettingsOperations
-from handlers.user_handlers import start_callback, help_command_callback
 from handlers.admin_handlers import list_channels
+from utils.helpers import is_owner  # Add this import
 
 logger = logging.getLogger(__name__)
 
@@ -101,10 +101,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return HELP_TROUBLESHOOT
         
     elif data == "back_start":
+        # Import here to avoid circular import
+        from handlers.user_handlers import start_callback
         await start_callback(update, context)
         return
         
     elif data == "back_help":
+        # Import here to avoid circular import
+        from handlers.user_handlers import help_command_callback
         await help_command_callback(update, context)
         return
         
