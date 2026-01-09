@@ -1,4 +1,3 @@
-import html
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import asyncio
@@ -253,6 +252,8 @@ async def troubleshoot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """List all bot admins with proper mentions."""
+    import html  # Import here to ensure it's available
+    
     user_id = update.effective_user.id
     
     if not is_admin(user_id):
@@ -270,7 +271,7 @@ async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for i, admin in enumerate(admins, 1):
         admin_id = admin['user_id']
         username = admin.get('username', '')
-        first_name = admin.get('first_name', 'Unknown')
+        first_name = admin.get('first_name', 'Unknown') or 'Unknown'
         last_name = admin.get('last_name', '')
         
         # Create full name
@@ -292,7 +293,6 @@ async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply_markup = InlineKeyboardMarkup(keyboard)
     
     await update.message.reply_text(message, reply_markup=reply_markup, parse_mode="HTML")
-
 async def users_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show user statistics."""
     user_id = update.effective_user.id
@@ -390,6 +390,7 @@ async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     else:
         await update.message.reply_text("⚠️ Log file not found!")
+
 
 
 
