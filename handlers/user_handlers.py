@@ -1,4 +1,4 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, InputMediaPhoto
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import asyncio
 from datetime import datetime, timedelta
@@ -8,7 +8,6 @@ from config import LINK_DURATION
 from database.operations import UserOperations, ChannelOperations, LinkOperations, SettingsOperations
 from utils.helpers import is_admin, is_owner, add_temporary_reaction, cleanup_message, generate_file_id
 from features.link_generator import generate_single_link
-from handlers.button_handlers import start_callback, help_command_callback
 import logging
 
 logger = logging.getLogger(__name__)
@@ -80,13 +79,107 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Schedule message cleanup
             asyncio.create_task(cleanup_message(context, update.effective_chat.id, note_message.message_id))
         else:
+            # Call start_callback directly (will be defined below)
             await start_callback(update, context)
     else:
         await update.message.reply_text("Please use this bot in private messages.")
 
+async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Start command callback for button navigation."""
+    from telegram import InputMediaPhoto
+    
+    query = update.callback_query
+    if query:
+        await query.answer()
+        message = query.message
+    else:
+        message = update.message
+    
+    settings = SettingsOperations.get_settings()
+    start_settings = settings["start"]
+    
+    # Create inline keyboard from settings
+    keyboard = []
+    for row in start_settings["buttons"]:
+        keyboard_row = []
+        for button in row:
+            if button["url"].startswith("callback:"):
+                callback_data = button["url"].replace("callback:", "")
+                keyboard_row.append(InlineKeyboardButton(button["text"], callback_data=callback_data))
+            else:
+                keyboard_row.append(InlineKeyboardButton(button["text"], url=button["url"]))
+        keyboard.append(keyboard_row)
+    
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    # Send message with image and buttons
+    if query:
+        try:
+            await query.edit_message_text(
+                text=start_settings["text"],
+                reply_markup=reply_markup
+            )
+        except:
+            await query.edit_message_text(
+                text=start_settings["text"],
+                reply_markup=reply_markup
+            )
+    else:
+        await message.reply_text(
+            text=start_settings["text"],
+            reply_markup=reply_markup
+        )
+
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Send a message with help information."""
     await help_command_callback(update, context)
+
+async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Help command callback for button navigation."""
+    from telegram import InputMediaPhoto
+    
+    query = update.callback_query
+    if query:
+        await query.answer()
+        message = query.message
+    else:
+        message = update.message
+    
+    user_id = update.effective_user.id
+    settings = SettingsOperations.get_settings()
+    help_settings = settings["help"]
+    
+    if is_admin(user_id):
+        # Create inline keyboard from settings
+        keyboard = []
+        for row in help_settings["buttons"]:
+            keyboard_row = []
+            for button in row:
+                if button["url"].startswith("callback:"):
+                    callback_data = button["url"].replace("callback:", "")
+                    keyboard_row.append(InlineKeyboardButton(button["text"], callback_data=callback_data))
+                else:
+                    keyboard_row.append(InlineKeyboardButton(button["text"], url=button["url"]))
+            keyboard.append(keyboard_row)
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        if query:
+            await query.edit_message_text(text=help_settings["text"], reply_markup=reply_markup)
+        else:
+            await message.reply_text(text=help_settings["text"], reply_markup=reply_markup)
+    else:
+        # Inline keyboard for non-admins
+        keyboard = [
+            [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="back_start"), InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        help_text = """This bot generates permanent channel links with temporary invites for admins only.
+    Contact the bot administrator for access."""
+        if query:
+            await query.edit_message_text(help_text, reply_markup=reply_markup)
+        else:
+            await message.reply_text(help_text, reply_markup=reply_markup)
 
 async def get_id(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Get user ID."""
