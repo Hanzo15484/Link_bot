@@ -65,6 +65,29 @@ async def settings_start_callback(update: Update, context: ContextTypes.DEFAULT_
 
     return SETTINGS_START
 
+async def settings_help_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Help settings callback."""
+    query = update.callback_query
+    await query.answer()
+    
+    keyboard = [
+        [InlineKeyboardButton("Text", callback_data="settings_help_text")],
+        [InlineKeyboardButton("Image", callback_data="settings_help_image")],
+        [InlineKeyboardButton("Button", callback_data="settings_help_buttons")],
+        [
+            InlineKeyboardButton("Back", callback_data="settings_main"),
+            InlineKeyboardButton("Close", callback_data="close")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await query.edit_message_text(
+        text="Choose what you want to change",
+        reply_markup=reply_markup
+    )
+
+    return SETTINGS_HELP
+
 async def settings_start_buttons_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start buttons settings callback."""
     query = update.callback_query
@@ -87,11 +110,131 @@ async def settings_start_buttons_callback(update: Update, context: ContextTypes.
 
     return SETTINGS_START_BUTTONS
 
+async def settings_help_buttons_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Help buttons settings callback."""
+    query = update.callback_query
+    await query.answer()
+    
+    keyboard = [
+        [InlineKeyboardButton("Add Button", callback_data="settings_help_add_button")],
+        [InlineKeyboardButton("Remove Button", callback_data="settings_help_remove_button")],
+        [
+            InlineKeyboardButton("Back", callback_data="settings_help"),
+            InlineKeyboardButton("Close", callback_data="close")
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    await query.edit_message_text(
+        text="Choose the option you want to change",
+        reply_markup=reply_markup
+    )
+
+    return SETTINGS_HELP_BUTTONS
+
+async def settings_text_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Prompt user to send new text."""
+    query = update.callback_query
+    await query.answer()
+    
+    callback_data = query.data
+    
+    if callback_data == "settings_start_text":
+        context.user_data['settings_mode'] = 'start_text'
+        prompt = "Please send the new start text:"
+        next_state = SETTINGS_START_TEXT
+    elif callback_data == "settings_help_text":
+        context.user_data['settings_mode'] = 'help_text'
+        prompt = "Please send the new help text:"
+        next_state = SETTINGS_HELP_TEXT
+    
+    await query.edit_message_text(
+        text=prompt,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start" if 'start' in callback_data else "settings_help"),
+             InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+        ])
+    )
+    
+    return next_state
+
+async def settings_image_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Prompt user to send new image."""
+    query = update.callback_query
+    await query.answer()
+    
+    callback_data = query.data
+    
+    if callback_data == "settings_start_image":
+        context.user_data['settings_mode'] = 'start_image'
+        prompt = "Please send the new start image:"
+        next_state = SETTINGS_START_IMAGE
+    elif callback_data == "settings_help_image":
+        context.user_data['settings_mode'] = 'help_image'
+        prompt = "Please send the new help image:"
+        next_state = SETTINGS_HELP_IMAGE
+    
+    await query.edit_message_text(
+        text=prompt,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start" if 'start' in callback_data else "settings_help"),
+             InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+        ])
+    )
+    
+    return next_state
+
+async def settings_button_add_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Prompt user to send button configuration."""
+    query = update.callback_query
+    await query.answer()
+    
+    callback_data = query.data
+    
+    if callback_data == "settings_start_add_button":
+        context.user_data['settings_mode'] = 'start_button'
+        prompt = """Please send button configuration in the following format:
+
+Example:
+Support - https://t.me/support
+Channel - https://t.me/channel
+
+Or for multiple buttons per row:
+Support - https://t.me/support | Channel - https://t.me/channel
+
+For callback buttons:
+Back - callback:back_start | Close - callback:close"""
+        next_state = SETTINGS_START_ADD_BUTTON
+    elif callback_data == "settings_help_add_button":
+        context.user_data['settings_mode'] = 'help_button'
+        prompt = """Please send button configuration in the following format:
+
+Example:
+Support - https://t.me/support
+Channel - https://t.me/channel
+
+Or for multiple buttons per row:
+Support - https://t.me/support | Channel - https://t.me/channel
+
+For callback buttons:
+Back - callback:back_help | Close - callback:close"""
+        next_state = SETTINGS_HELP_ADD_BUTTON
+    
+    await query.edit_message_text(
+        text=prompt,
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons" if 'start' in callback_data else "settings_help_buttons"),
+             InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+        ])
+    )
+    
+    return next_state
+
 async def settings_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle text settings updates."""
     user_id = update.effective_user.id
     if not is_owner(user_id):
-        return
+        return ConversationHandler.END
     
     settings = SettingsOperations.get_settings()
     new_text = update.message.text
@@ -123,11 +266,11 @@ async def settings_image_handler(update: Update, context: ContextTypes.DEFAULT_T
     """Handle image settings updates."""
     user_id = update.effective_user.id
     if not is_owner(user_id):
-        return
+        return ConversationHandler.END
     
     if not update.message.photo:
         await update.message.reply_text("Please send an image.")
-        return
+        return SETTINGS_START_IMAGE if context.user_data.get('settings_mode') == 'start_image' else SETTINGS_HELP_IMAGE
     
     settings = SettingsOperations.get_settings()
     photo = update.message.photo[-1]
@@ -160,7 +303,7 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
     """Handle button settings updates."""
     user_id = update.effective_user.id
     if not is_owner(user_id):
-        return
+        return ConversationHandler.END
     
     button_text = update.message.text
     settings = SettingsOperations.get_settings()
@@ -171,6 +314,10 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         rows = button_text.split('\n')
         
         for row in rows:
+            row = row.strip()
+            if not row:
+                continue
+                
             row_buttons = []
             button_configs = row.split('|')
             
@@ -214,10 +361,11 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
         return ConversationHandler.END
         
     except Exception as e:
+        logger.error(f"Error parsing button configuration: {str(e)}")
         await update.message.reply_text(
             f"❌ Error parsing button configuration: {str(e)}\n\nPlease use the correct format.",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons"),
+                [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons" if context.user_data.get('settings_mode') == 'start_button' else "settings_help_buttons"),
                  InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
             ])
         )
@@ -227,18 +375,37 @@ async def settings_button_handler(update: Update, context: ContextTypes.DEFAULT_
 settings_conv_handler = ConversationHandler(
     entry_points=[CommandHandler("settings", settings_command)],
     states={
-        SETTINGS_MAIN: [CallbackQueryHandler(settings_command_callback, pattern="^settings_main$")],
-        SETTINGS_START: [CallbackQueryHandler(settings_start_callback, pattern="^settings_start$")],
-        SETTINGS_START_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler)],
-        SETTINGS_START_IMAGE: [MessageHandler(filters.PHOTO, settings_image_handler)],
-        SETTINGS_START_BUTTONS: [CallbackQueryHandler(settings_start_buttons_callback, pattern="^settings_start_buttons$")],
-        SETTINGS_START_ADD_BUTTON: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler)],
-        SETTINGS_HELP: [CallbackQueryHandler(settings_start_callback, pattern="^settings_help$")],
-        SETTINGS_HELP_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler)],
-        SETTINGS_HELP_IMAGE: [MessageHandler(filters.PHOTO, settings_image_handler)],
-        SETTINGS_HELP_BUTTONS: [CallbackQueryHandler(settings_start_buttons_callback, pattern="^settings_help_buttons$")],
-        SETTINGS_HELP_ADD_BUTTON: [MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler)],
+        SETTINGS_MAIN: [
+            CallbackQueryHandler(settings_start_callback, pattern="^settings_start$"),
+            CallbackQueryHandler(settings_help_callback, pattern="^settings_help$"),
+            CallbackQueryHandler(settings_command_callback, pattern="^settings_main$"),
+        ],
+        SETTINGS_START: [
+            CallbackQueryHandler(settings_text_callback, pattern="^settings_start_text$"),
+            CallbackQueryHandler(settings_image_callback, pattern="^settings_start_image$"),
+            CallbackQueryHandler(settings_start_buttons_callback, pattern="^settings_start_buttons$"),
+            CallbackQueryHandler(settings_command_callback, pattern="^settings_main$"),
+        ],
+        SETTINGS_START_BUTTONS: [
+            CallbackQueryHandler(settings_button_add_callback, pattern="^settings_start_add_button$"),
+            CallbackQueryHandler(settings_button_add_callback, pattern="^settings_start_remove_button$"),  # You need to implement this
+            CallbackQueryHandler(settings_start_callback, pattern="^settings_start$"),
+        ],
+        SETTINGS_HELP: [
+            CallbackQueryHandler(settings_text_callback, pattern="^settings_help_text$"),
+            CallbackQueryHandler(settings_image_callback, pattern="^settings_help_image$"),
+            CallbackQueryHandler(settings_help_buttons_callback, pattern="^settings_help_buttons$"),
+            CallbackQueryHandler(settings_command_callback, pattern="^settings_main$"),
+        ],
+        SETTINGS_HELP_BUTTONS: [
+            CallbackQueryHandler(settings_button_add_callback, pattern="^settings_help_add_button$"),
+            CallbackQueryHandler(settings_button_add_callback, pattern="^settings_help_remove_button$"),  # You need to implement this
+            CallbackQueryHandler(settings_help_callback, pattern="^settings_help$"),
+        ],
     },
-    fallbacks=[CommandHandler("cancel", lambda update, context: ConversationHandler.END)],
-                   )
-
+    fallbacks=[
+        CallbackQueryHandler(lambda update, context: ConversationHandler.END, pattern="^close$"),
+        CommandHandler("cancel", lambda update, context: ConversationHandler.END)
+    ],
+    allow_reentry=True
+    )
