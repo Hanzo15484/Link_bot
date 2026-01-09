@@ -21,17 +21,17 @@ CONFIG_FILE = "config.json"
 # Pagination
 LIST_CHANNELS_PAGE_SIZE = 10
 
-# Conversation states
 (
+    # Main states (0-15)
     ABOUT, HELP_REQUIREMENTS, HELP_HOW, HELP_TROUBLESHOOT,
     SETTINGS_MAIN, SETTINGS_START, SETTINGS_START_TEXT, SETTINGS_START_IMAGE,
     SETTINGS_START_BUTTONS, SETTINGS_START_ADD_BUTTON, SETTINGS_START_REMOVE_BUTTON,
     SETTINGS_HELP, SETTINGS_HELP_TEXT, SETTINGS_HELP_IMAGE,
-    SETTINGS_HELP_BUTTONS, SETTINGS_HELP_ADD_BUTTON, SETTINGS_HELP_REMOVE_BUTTON
-) = range(17)
-
-ASK_IMAGE = range(1)
-SEARCH_CHANNEL = range(1)
+    SETTINGS_HELP_BUTTONS, SETTINGS_HELP_ADD_BUTTON, SETTINGS_HELP_REMOVE_BUTTON,
+    # Separate state groups
+    ASK_IMAGE,
+    SEARCH_CHANNEL
+) = range(19)
 
 # Font styles
 FONTS = {
@@ -51,3 +51,4 @@ logging.basicConfig(
     handlers=[logging.FileHandler('bot.log'), logging.StreamHandler()]
 )
 logger = logging.getLogger(__name__)
+
