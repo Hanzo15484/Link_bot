@@ -24,8 +24,10 @@ from handlers.admin_handlers import (
 from handlers.owner_handlers import (
     auth_user, deauth_user, promote_user, demote_user,
     ban_user, unban_user, restart_bot, broadcast_message,
-    update_bot, channels, maintenance
+    update_bot, channels
 )
+# Import maintenance from maintenance_handlers
+from handlers.maintenance_handlers import maintenance
 from handlers.button_handlers import button_handler, button_handler_channels
 from handlers.settings_handlers import settings_conv_handler, settings_command
 from handlers.maintenance_handlers import (
@@ -82,7 +84,9 @@ def main():
     application.add_handler(CommandHandler("broadcast", broadcast_message))
     application.add_handler(CommandHandler("update", update_bot))
     application.add_handler(CommandHandler("channels", channels))
-    application.add_handler(CommandHandler("maintenance", maintenance))
+    application.add_handler(CommandHandler("maintenance", maintenance))  # Fixed import
+    
+    # Font command handler
     application.add_handler(CommandHandler("font", font_command))
     
     # Settings handler
