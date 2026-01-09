@@ -2,10 +2,11 @@ import re
 import base64
 import asyncio
 import random
+import time
 from datetime import datetime, timedelta
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 import logging
-from config import OWNER_ID, ADMIN_IDS
+from config import OWNER_ID
 from database.operations import UserOperations
 
 logger = logging.getLogger(__name__)
@@ -32,7 +33,10 @@ async def add_temporary_reaction(update):
     """Add a temporary reaction to message."""
     reactions = ["🎉", "😎", "🥰", "⚡", "❤‍🔥", "🤩"]
     reaction = random.choice(reactions)
-    await update.message.set_reaction(reaction)
+    try:
+        await update.message.set_reaction(reaction)
+    except:
+        pass
 
 async def cleanup_message(context, chat_id, message_id, delay=180):
     """Clean up message after timeout."""
@@ -143,3 +147,22 @@ async def extract_channel_info(context, input_str):
     except Exception as e:
         logger.error(f"Error in extract_channel_info: {e}")
         return None
+
+def get_wait_image():
+    """Get wait image file ID."""
+    try:
+        with open("config.json", "r") as f:
+            import json
+            data = json.load(f)
+            return data.get("wait_image")
+    except FileNotFoundError:
+        return None
+
+def save_wait_image(file_id):
+    """Save wait image file ID."""
+    try:
+        with open("config.json", "w") as f:
+            import json
+            json.dump({"wait_image": file_id}, f)
+    except Exception as e:
+        logger.error(f"Error saving wait image: {e}")
