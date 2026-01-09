@@ -70,6 +70,18 @@ class UserOperations:
         return users
     
     @staticmethod
+    def get_user_count():
+        """Get total user count."""
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT COUNT(*) as count FROM users")
+        result = cursor.fetchone()
+        
+        conn.close()
+        return result['count'] if result else 0
+    
+    @staticmethod
     def get_all_admins():
         """Get all admin users."""
         conn = db.get_connection()
@@ -136,6 +148,39 @@ class UserOperations:
         conn.commit()
         conn.close()
         return cursor.rowcount > 0
+    
+    @staticmethod
+    def authorize_user(user_id, days, authorized_by):
+        """Authorize a user for temporary access."""
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        expiry_date = datetime.utcnow() + timedelta(days=days)
+        cursor.execute('''
+            UPDATE users 
+            SET authorized_until = ?, authorized_by = ?
+            WHERE user_id = ?
+        ''', (expiry_date.isoformat(), authorized_by, user_id))
+        
+        conn.commit()
+        conn.close()
+        return cursor.rowcount > 0
+    
+    @staticmethod
+    def deauthorize_user(user_id):
+        """Deauthorize a user."""
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+            UPDATE users 
+            SET authorized_until = NULL, authorized_by = NULL
+            WHERE user_id = ?
+        ''', (user_id,))
+        
+        conn.commit()
+        conn.close()
+        return cursor.rowcount > 0
 
 class ChannelOperations:
     @staticmethod
@@ -190,14 +235,24 @@ class ChannelOperations:
         return channels
     
     @staticmethod
+    def get_channel_count():
+        """Get total channel count."""
+        conn = db.get_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute("SELECT COUNT(*) as count FROM channels")
+        result = cursor.fetchone()
+        
+        conn.close()
+        return result['count'] if result else 0
+    
+    @staticmethod
     def delete_channel(channel_id):
         """Delete a channel and its links."""
         conn = db.get_connection()
         cursor = conn.cursor()
         
-        # Delete associated links first
         cursor.execute("DELETE FROM links WHERE channel_id = ?", (channel_id,))
-        # Delete channel
         cursor.execute("DELETE FROM channels WHERE channel_id = ?", (channel_id,))
         
         conn.commit()
