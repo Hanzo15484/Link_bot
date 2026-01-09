@@ -1,7 +1,8 @@
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
-import re
 import logging
+from datetime import datetime, timedelta
+import html
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYP
     
     if forwarded_chat.type in ["channel", "supergroup"]:
         channel_id = str(forwarded_chat.id)
-        channel_title = forwarded_chat.title
+        channel_title = forwarded_chat.title or "No Title"
         channel_username = forwarded_chat.username
         
         # Create channel link
@@ -35,8 +36,7 @@ async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYP
         else:
             channel_link = f"ID: {channel_id}"
         
-        # Escape Markdown characters
-        import html
+        # Escape HTML characters
         channel_title_safe = html.escape(channel_title)
         
         response = f"""
@@ -66,9 +66,15 @@ async def forwarded_channel_id(update: Update, context: ContextTypes.DEFAULT_TYP
                 
                 response += f"\n🔗 <b>Quick Invite:</b> {invite_link.invite_link}"
                 response += f"\n⏰ <b>Expires:</b> 5 minutes"
+                admin_status = "✅ <i>Bot is admin in this channel</i>"
+            else:
+                admin_status = "⚠️ <i>Bot is not admin in this channel</i>"
+                
+            response += f"\n\n{admin_status}"
+            
         except Exception as e:
             logger.error(f"Could not create invite link: {e}")
-            response += f"\n⚠️ <i>Bot is not admin in this channel</i>"
+            response += f"\n\n⚠️ <i>Bot is not admin in this channel</i>"
         
         await message.reply_text(response, parse_mode="HTML")
         
