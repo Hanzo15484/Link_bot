@@ -1,6 +1,5 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, ConversationHandler, CommandHandler, CallbackQueryHandler, MessageHandler, filters
-import json
 import logging
 
 from config import *
@@ -12,10 +11,12 @@ logger = logging.getLogger(__name__)
 async def settings_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Settings command handler."""
     if not is_owner(update.effective_user.id):
-        await update.message.reply_text("You are not authorized to use this command.")
-        return
+        if update.message:
+            await update.message.reply_text("You are not authorized to use this command.")
+        return ConversationHandler.END
     
     await settings_command_callback(update, context)
+    return SETTINGS_MAIN
 
 async def settings_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Settings command callback."""
@@ -147,6 +148,8 @@ async def settings_text_callback(update: Update, context: ContextTypes.DEFAULT_T
         context.user_data['settings_mode'] = 'help_text'
         prompt = "Please send the new help text:"
         next_state = SETTINGS_HELP_TEXT
+    else:
+        return ConversationHandler.END
     
     await query.edit_message_text(
         text=prompt,
@@ -171,8 +174,10 @@ async def settings_image_callback(update: Update, context: ContextTypes.DEFAULT_
         next_state = SETTINGS_START_IMAGE
     elif callback_data == "settings_help_image":
         context.user_data['settings_mode'] = 'help_image'
-        prompt = "Please send the new help image:"
+        prompt = "Please send the new help text:"
         next_state = SETTINGS_HELP_IMAGE
+    else:
+        return ConversationHandler.END
     
     await query.edit_message_text(
         text=prompt,
@@ -219,6 +224,8 @@ Support - https://t.me/support | Channel - https://t.me/channel
 For callback buttons:
 Back - callback:back_help | Close - callback:close"""
         next_state = SETTINGS_HELP_ADD_BUTTON
+    else:
+        return ConversationHandler.END
     
     await query.edit_message_text(
         text=prompt,
@@ -229,6 +236,22 @@ Back - callback:back_help | Close - callback:close"""
     )
     
     return next_state
+
+async def settings_button_remove_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle button removal."""
+    query = update.callback_query
+    await query.answer()
+    
+    # TODO: Implement button removal logic
+    await query.edit_message_text(
+        text="Button removal feature not implemented yet.",
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("ʙᴀᴄᴋ", callback_data="settings_start_buttons" if 'start' in query.data else "settings_help_buttons"),
+             InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]
+        ])
+    )
+    
+    return ConversationHandler.END
 
 async def settings_text_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle text settings updates."""
@@ -378,7 +401,6 @@ settings_conv_handler = ConversationHandler(
         SETTINGS_MAIN: [
             CallbackQueryHandler(settings_start_callback, pattern="^settings_start$"),
             CallbackQueryHandler(settings_help_callback, pattern="^settings_help$"),
-            CallbackQueryHandler(settings_command_callback, pattern="^settings_main$"),
         ],
         SETTINGS_START: [
             CallbackQueryHandler(settings_text_callback, pattern="^settings_start_text$"),
@@ -386,10 +408,19 @@ settings_conv_handler = ConversationHandler(
             CallbackQueryHandler(settings_start_buttons_callback, pattern="^settings_start_buttons$"),
             CallbackQueryHandler(settings_command_callback, pattern="^settings_main$"),
         ],
+        SETTINGS_START_TEXT: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler),
+        ],
+        SETTINGS_START_IMAGE: [
+            MessageHandler(filters.PHOTO, settings_image_handler),
+        ],
         SETTINGS_START_BUTTONS: [
             CallbackQueryHandler(settings_button_add_callback, pattern="^settings_start_add_button$"),
-            CallbackQueryHandler(settings_button_add_callback, pattern="^settings_start_remove_button$"),  # You need to implement this
+            CallbackQueryHandler(settings_button_remove_callback, pattern="^settings_start_remove_button$"),
             CallbackQueryHandler(settings_start_callback, pattern="^settings_start$"),
+        ],
+        SETTINGS_START_ADD_BUTTON: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler),
         ],
         SETTINGS_HELP: [
             CallbackQueryHandler(settings_text_callback, pattern="^settings_help_text$"),
@@ -397,15 +428,29 @@ settings_conv_handler = ConversationHandler(
             CallbackQueryHandler(settings_help_buttons_callback, pattern="^settings_help_buttons$"),
             CallbackQueryHandler(settings_command_callback, pattern="^settings_main$"),
         ],
+        SETTINGS_HELP_TEXT: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, settings_text_handler),
+        ],
+        SETTINGS_HELP_IMAGE: [
+            MessageHandler(filters.PHOTO, settings_image_handler),
+        ],
         SETTINGS_HELP_BUTTONS: [
             CallbackQueryHandler(settings_button_add_callback, pattern="^settings_help_add_button$"),
-            CallbackQueryHandler(settings_button_add_callback, pattern="^settings_help_remove_button$"),  # You need to implement this
+            CallbackQueryHandler(settings_button_remove_callback, pattern="^settings_help_remove_button$"),
             CallbackQueryHandler(settings_help_callback, pattern="^settings_help$"),
+        ],
+        SETTINGS_HELP_ADD_BUTTON: [
+            MessageHandler(filters.TEXT & ~filters.COMMAND, settings_button_handler),
         ],
     },
     fallbacks=[
         CallbackQueryHandler(lambda update, context: ConversationHandler.END, pattern="^close$"),
-        CommandHandler("cancel", lambda update, context: ConversationHandler.END)
+        CommandHandler("cancel", lambda update, context: ConversationHandler.END),
+        CommandHandler("start", lambda update, context: ConversationHandler.END),
+        CommandHandler("help", lambda update, context: ConversationHandler.END),
     ],
-    allow_reentry=True
+    allow_reentry=True,
+    per_chat=False,
+    per_user=True,
+    per_message=False,
     )
