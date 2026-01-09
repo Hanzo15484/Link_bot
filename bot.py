@@ -1,7 +1,5 @@
 import logging
-import asyncio
 import time
-from datetime import datetime
 import sys
 import os
 
@@ -14,8 +12,10 @@ from telegram.ext import (
     ConversationHandler, MessageHandler, filters
 )
 
-from config import BOT_TOKEN, BOT_START_TIME
+from config import BOT_TOKEN, BOT_START_TIME, logger
 from database.models import Database
+
+# Import handlers
 from handlers.user_handlers import start, help_command, get_id, gen_link
 from handlers.admin_handlers import (
     batch_link, list_channels, debug_channel, troubleshoot,
@@ -27,7 +27,7 @@ from handlers.owner_handlers import (
     update_bot, channels, maintenance
 )
 from handlers.button_handlers import button_handler, button_handler_channels
-from handlers.settings_handlers import settings_command, settings_conv_handler
+from handlers.settings_handlers import settings_conv_handler, settings_command
 from handlers.maintenance_handlers import (
     maintenance_callback, alert_callback, custom_alert,
     maintenance_guard, broadcast_cancel_callback
@@ -36,21 +36,13 @@ from handlers.font_handlers import font_command, font_callback, handle_font_text
 from features.smallcaps import smallcaps_handler
 from features.forward_handler import forwarded_channel_id
 
-# Enable logging
-logging.basicConfig(
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    level=logging.ERROR,
-    handlers=[logging.FileHandler('bot.log'), logging.StreamHandler()]
-)
-logger = logging.getLogger(__name__)
-
-# Initialize database
-db = Database()
-
 def main():
     """Start the bot."""
     global BOT_START_TIME
     BOT_START_TIME = time.time()
+    
+    # Initialize database
+    db = Database()
     
     # Create the Application
     application = (Application.builder()
@@ -97,7 +89,7 @@ def main():
     application.add_handler(settings_conv_handler)
     
     # Button handlers
-    application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*)$"))
+    application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*|list_channels_.*|page_info)$"))
     
     # Channels button handlers
     application.add_handler(CallbackQueryHandler(button_handler_channels, pattern="^(get_channels|get_settings|back_channels|close_channels)$"))
@@ -121,8 +113,6 @@ def main():
     
     # Start the bot
     logger.info("Bot started successfully!")
-    
-    # Run the bot
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == '__main__':
