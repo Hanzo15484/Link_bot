@@ -39,7 +39,7 @@ def format_uptime(seconds: float) -> str:
     return ", ".join(parts)
 
 
-async def ping_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
     start = time.time()
@@ -405,6 +405,7 @@ async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     else:
         await update.message.reply_text("⚠️ Log file not found!")
+
 
 
 
