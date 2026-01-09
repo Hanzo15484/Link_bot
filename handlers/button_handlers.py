@@ -2,12 +2,14 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import logging
 import json
+import os
+import tempfile
 
 from config import SETTINGS_MAIN, SETTINGS_START, SETTINGS_START_TEXT, SETTINGS_START_IMAGE, \
                   SETTINGS_START_BUTTONS, SETTINGS_START_ADD_BUTTON, SETTINGS_START_REMOVE_BUTTON, \
                   SETTINGS_HELP, SETTINGS_HELP_TEXT, SETTINGS_HELP_IMAGE, SETTINGS_HELP_BUTTONS, \
                   SETTINGS_HELP_ADD_BUTTON, SETTINGS_HELP_REMOVE_BUTTON, ABOUT, \
-                  HELP_REQUIREMENTS, HELP_HOW, HELP_TROUBLESHOOT
+                  HELP_REQUIREMENTS, HELP_HOW, HELP_TROUBLESHOOT, OWNER_ID
 from database.operations import SettingsOperations
 from handlers.admin_handlers import list_channels
 from utils.helpers import is_owner
@@ -130,6 +132,17 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await query.answer("You are on the channels list page.", show_alert=True)
             return
             
+        # Generate link from forwarded channel
+        elif data.startswith("genlink_"):
+            channel_id = data.replace("genlink_", "")
+            await query.answer(f"Generating link for channel {channel_id}...")
+            
+            # Import here to avoid circular import
+            from features.link_generator import generate_single_link
+            context.args = [channel_id]
+            await generate_single_link(update, context, channel_id)
+            return
+            
     except Exception as e:
         logger.error(f"Error in button_handler: {e}")
         try:
@@ -139,10 +152,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def button_handler_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle channels button callbacks."""
-    from config import OWNER_ID
-    import os
-    import tempfile
-    
     query = update.callback_query
     await query.answer()
     user_id = query.from_user.id
