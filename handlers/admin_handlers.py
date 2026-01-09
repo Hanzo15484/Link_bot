@@ -1,3 +1,4 @@
+import html
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes
 import asyncio
@@ -389,6 +390,7 @@ async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     else:
         await update.message.reply_text("⚠️ Log file not found!")
+
 
 
 
