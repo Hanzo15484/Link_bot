@@ -87,6 +87,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Start command callback for button navigation."""
     from telegram import InputMediaPhoto
+    import json  # Add this import
     
     query = update.callback_query
     if query:
@@ -98,15 +99,20 @@ async def start_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     settings = SettingsOperations.get_settings()
     start_settings = settings["start"]
     
+    # Parse buttons from JSON string if needed
+    buttons = start_settings["buttons"]
+    if isinstance(buttons, str):
+        buttons = json.loads(buttons)
+    
     # Create inline keyboard from settings
     keyboard = []
-    for row in start_settings["buttons"]:
+    for row in buttons:
         keyboard_row = []
         for button in row:
-            if button["url"].startswith("callback:"):
+            if isinstance(button, dict) and button.get("url", "").startswith("callback:"):
                 callback_data = button["url"].replace("callback:", "")
                 keyboard_row.append(InlineKeyboardButton(button["text"], callback_data=callback_data))
-            else:
+            elif isinstance(button, dict):
                 keyboard_row.append(InlineKeyboardButton(button["text"], url=button["url"]))
         keyboard.append(keyboard_row)
     
@@ -137,6 +143,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Help command callback for button navigation."""
     from telegram import InputMediaPhoto
+    import json  # Add this import
     
     query = update.callback_query
     if query:
@@ -150,15 +157,20 @@ async def help_command_callback(update: Update, context: ContextTypes.DEFAULT_TY
     help_settings = settings["help"]
     
     if is_admin(user_id):
+        # Parse buttons from JSON string if needed
+        buttons = help_settings["buttons"]
+        if isinstance(buttons, str):
+            buttons = json.loads(buttons)
+        
         # Create inline keyboard from settings
         keyboard = []
-        for row in help_settings["buttons"]:
+        for row in buttons:
             keyboard_row = []
             for button in row:
-                if button["url"].startswith("callback:"):
+                if isinstance(button, dict) and button.get("url", "").startswith("callback:"):
                     callback_data = button["url"].replace("callback:", "")
                     keyboard_row.append(InlineKeyboardButton(button["text"], callback_data=callback_data))
-                else:
+                elif isinstance(button, dict):
                     keyboard_row.append(InlineKeyboardButton(button["text"], url=button["url"]))
             keyboard.append(keyboard_row)
         
@@ -200,3 +212,4 @@ async def gen_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     channel_input = context.args[0]
     await generate_single_link(update, context, channel_input)
+
