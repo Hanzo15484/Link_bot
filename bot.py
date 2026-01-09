@@ -26,10 +26,9 @@ from handlers.owner_handlers import (
     ban_user, unban_user, restart_bot, broadcast_message,
     update_bot, channels
 )
-# Import maintenance from maintenance_handlers
 from handlers.maintenance_handlers import maintenance
 from handlers.button_handlers import button_handler, button_handler_channels
-from handlers.settings_handlers import settings_conv_handler, settings_command
+from handlers.settings_handlers import settings_conv_handler
 from handlers.maintenance_handlers import (
     maintenance_callback, alert_callback, custom_alert,
     maintenance_guard, broadcast_cancel_callback
@@ -38,11 +37,11 @@ from handlers.font_handlers import font_command, font_callback, handle_font_text
 from features.smallcaps import smallcaps_handler
 from features.forward_handler import forwarded_channel_id
 
+# Initialize BOT_START_TIME
+BOT_START_TIME = time.time()
+
 def main():
     """Start the bot."""
-    global BOT_START_TIME
-    BOT_START_TIME = time.time()
-    
     # Initialize database
     db = Database()
     
@@ -53,7 +52,6 @@ def main():
         .write_timeout(25)  
         .connect_timeout(20)
         .pool_timeout(20)
-        .concurrent_updates(True)
         .build()
     )
 
@@ -84,9 +82,7 @@ def main():
     application.add_handler(CommandHandler("broadcast", broadcast_message))
     application.add_handler(CommandHandler("update", update_bot))
     application.add_handler(CommandHandler("channels", channels))
-    application.add_handler(CommandHandler("maintenance", maintenance))  # Fixed import
-    
-    # Font command handler
+    application.add_handler(CommandHandler("maintenance", maintenance))
     application.add_handler(CommandHandler("font", font_command))
     
     # Settings handler
@@ -111,7 +107,7 @@ def main():
     application.add_handler(MessageHandler(filters.FORWARDED, forwarded_channel_id))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, smallcaps_handler), group=2)
     
-    # Maintenance guard (must be last handler)
+    # Maintenance guard
     application.add_handler(MessageHandler(filters.COMMAND, maintenance_guard), group=0)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, custom_alert), group=1)
     
