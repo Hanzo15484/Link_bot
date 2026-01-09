@@ -28,7 +28,7 @@ from handlers.owner_handlers import (
 )
 from handlers.maintenance_handlers import maintenance
 from handlers.button_handlers import button_handler, button_handler_channels
-from handlers.settings_handlers import settings_conv_handler
+from handlers.settings_handlers import settings_conv_handler, settings_callback_handler
 from handlers.maintenance_handlers import (
     maintenance_callback, alert_callback, custom_alert,
     maintenance_guard, broadcast_cancel_callback
@@ -85,6 +85,7 @@ def main():
     
     # Settings handler
     application.add_handler(settings_conv_handler)
+    application.add_handler(settings_callback_handler)
     
     # Button handlers
     application.add_handler(CallbackQueryHandler(button_handler, pattern="^(about|help_requirements|help_how|help_troubleshoot|back_start|back_help|close|settings_main|settings_start|settings_start_text|settings_start_image|settings_start_buttons|settings_start_add_button|settings_start_remove_button|settings_help|settings_help_text|settings_help_image|settings_help_buttons|settings_help_add_button|settings_help_remove_button|remove_button_confirm_.*|remove_help_button_confirm_.*|remove_button_cancel_.*|remove_help_button_cancel_.*|list_channels_.*|page_info)$"))
@@ -115,6 +116,7 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 
 
