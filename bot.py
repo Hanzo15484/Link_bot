@@ -40,10 +40,12 @@ from features.smallcaps import smallcaps_handler
 from features.forward_handler import forwarded_channel_id
 
 # Initialize BOT_START_TIME
-BOT_START_TIME = time.time()
+BOT_START_TIME = None
 
 def main():
     """Start the bot."""
+    global BOT_START_TIME 
+    BOT_START_TIME = time.time()
     # Initialize database
     db = Database()
     
@@ -119,4 +121,5 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
