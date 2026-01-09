@@ -1,25 +1,37 @@
 import os
+import logging
 from dotenv import load_dotenv
 
+# Load environment variables
 load_dotenv("Bot_Token.env")
 
 # Bot configuration
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 OWNER_ID = 5373577888
 ADMIN_IDS = [5373577888, 6170814776, 6959143950]
-LINK_DURATION = 5 * 60  # 5 minutes in seconds
-MESSAGE_CLEANUP_TIME = 3 * 60  # 6 minutes in seconds
+LINK_DURATION = 5 * 60  # 5 minutes
+MESSAGE_CLEANUP_TIME = 3 * 60  # 3 minutes
 MAINTENANCE_MODE = False
 SAFE_COMMANDS = ["start", "help", "id"]
 GITHUB_REPO = "Hanzo15484/link_bot.py"
 BOT_START_TIME = None
-
-# File paths
 LOG_FILE = "bot.log"
 CONFIG_FILE = "config.json"
 
 # Pagination
 LIST_CHANNELS_PAGE_SIZE = 10
+
+# Conversation states
+(
+    ABOUT, HELP_REQUIREMENTS, HELP_HOW, HELP_TROUBLESHOOT,
+    SETTINGS_MAIN, SETTINGS_START, SETTINGS_START_TEXT, SETTINGS_START_IMAGE,
+    SETTINGS_START_BUTTONS, SETTINGS_START_ADD_BUTTON, SETTINGS_START_REMOVE_BUTTON,
+    SETTINGS_HELP, SETTINGS_HELP_TEXT, SETTINGS_HELP_IMAGE,
+    SETTINGS_HELP_BUTTONS, SETTINGS_HELP_ADD_BUTTON, SETTINGS_HELP_REMOVE_BUTTON
+) = range(17)
+
+ASK_IMAGE = range(1)
+SEARCH_CHANNEL = range(1)
 
 # Font styles
 FONTS = {
@@ -31,3 +43,11 @@ FONTS = {
     "Box": "🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩🅐🅑🅒🅓🅔🅕🅖🅗🅘🅙🅚🅛🅜🅝🅞🅟🅠🅡🅢🅣🅤🅥🅦🅧🅨🅩",
     "Brackets": "【a】【b】【c】【d】【e】【f】【g】【h】【i】【j】【k】【l】【m】【n】【o】【p】【q】【r】【s】【t】【u】【v】【w】【x】【y】【z】【A】【B】【C】【D】【E】【F】【G】【H】【I】【J】【K】【L】【M】【N】【O】【P】【Q】【R】【S】【T】【U】【V】【W】【X】【Y】【Z】",
 }
+
+# Enable logging
+logging.basicConfig(
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    level=logging.ERROR,
+    handlers=[logging.FileHandler('bot.log'), logging.StreamHandler()]
+)
+logger = logging.getLogger(__name__)
