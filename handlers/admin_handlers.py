@@ -8,6 +8,7 @@ from config import LINK_DURATION, LIST_CHANNELS_PAGE_SIZE
 from database.operations import UserOperations, ChannelOperations, LinkOperations, SettingsOperations
 from utils.helpers import is_admin, extract_channel_info, generate_file_id
 from features.link_generator import generate_single_link, regenerate_channel_link
+from time import time
 
 logger = logging.getLogger(__name__)
 
@@ -262,7 +263,6 @@ async def users_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def ping(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Check bot uptime and responsiveness."""
-    import time
     from config import BOT_START_TIME
     from datetime import timedelta
     
@@ -331,3 +331,4 @@ async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     else:
         await update.message.reply_text("⚠️ Log file not found!")
+
