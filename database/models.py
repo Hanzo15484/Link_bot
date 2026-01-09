@@ -1,7 +1,7 @@
 import sqlite3
 import json
-from datetime import datetime
 import logging
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ class Database:
             )
         ''')
         
-        # Insert default settings if not exist
+        # Insert default settings
         default_start = {
             "text": """✦ ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴀᴅᴠᴀɴᴄᴇᴅ ʟɪɴᴋs sʜᴀʀɪɴɢ ʙᴏᴛ
 • ᴡɪᴛʜ ᴛʜɪs ʙᴏᴛ, ʏᴏᴜ ᴄᴀɴ sᴀғᴇʟʏ sʜᴀʀᴇ ʟɪɴᴋs ᴀɴᴅ ᴋᴇᴇᴘ ʏᴏᴜʀ ᴄʜᴀɴɴᴇʟs ᴘʀᴏᴛᴇᴄᴛᴇᴅ ғʀᴏᴍ ᴄᴏᴘʏʀɪɢʜᴛ ɪssᴜᴇs.
@@ -129,13 +129,13 @@ class Database:
         cursor.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", 
                       ("help", json.dumps(default_help)))
         
-        # Insert owner as admin
-        from config import OWNER_ID, ADMIN_IDS
+        # Insert default admins
+        from config import ADMIN_IDS
         for admin_id in ADMIN_IDS:
             cursor.execute('''
-                INSERT OR REPLACE INTO users (user_id, is_admin)
-                VALUES (?, ?)
-            ''', (admin_id, 1))
+                INSERT OR IGNORE INTO users (user_id, is_admin)
+                VALUES (?, 1)
+            ''', (admin_id,))
         
         conn.commit()
         conn.close()
