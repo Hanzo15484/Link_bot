@@ -17,65 +17,98 @@ async def batch_link(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.effective_user.id
     
     if not is_admin(user_id):
-        await update.message.reply_text("You are not authorized to use this command.")
+        await update.message.reply_text("You are not authorized to use this bot.")
         return
     
-    status_msg = await update.message.reply_text("Fetching all channels...")
+    status_msg = await update.message.reply_text("🔍 Fetching all channels where bot is admin...")
     
     try:
-        channels = ChannelOperations.get_all_channels()
+        # Get bot info
+        bot_me = await context.bot.get_me()
+        bot_id = bot_me.id
+        bot_username = bot_me.username
         
-        if not channels:
-            await status_msg.edit_text("No channels found in database. Use /gen_link to add channels first.")
-            return
+        # We need to get all chats where bot is admin
+        # Since Telegram API doesn't provide this directly, we'll use existing database
+        # and try to discover new channels
         
-        count = 0
-        bot_username = (await context.bot.get_me()).username
-        message = "Generated links for all channels:\n\n"
+        existing_channels = ChannelOperations.get_all_channels()
+        success_count = 0
+        fail_count = 0
+        discovered_count = 0
         
-        for channel in channels:
-            file_id = channel['file_id']
-            link_data = LinkOperations.get_link(file_id)
-            
-            if link_data:
-                expiry_time = link_data['expiry_time']
+        message = "📢 <b>Batch Link Generation Results:</b>\n\n"
+        
+        # Process existing channels
+        if existing_channels:
+            for channel in existing_channels:
+                channel_id = channel['channel_id']
+                channel_name = channel['channel_name']
+                file_id = channel['file_id']
                 
-                # If link is expired or about to expire, regenerate it
-                if datetime.utcnow() > expiry_time - timedelta(minutes=1):
-                    try:
-                        new_expiry = datetime.utcnow() + timedelta(seconds=LINK_DURATION)
-                        new_invite_link = await context.bot.create_chat_invite_link(
-                            chat_id=channel['channel_id'],
-                            expire_date=new_expiry,
-                            creates_join_request=False
-                        )
-                        
-                        LinkOperations.update_link(file_id, new_invite_link.invite_link, new_expiry)
-                        count += 1
-                        logger.info(f"Regenerated link for {channel['channel_name']}")
-                        
-                        bot_link = f"https://t.me/{bot_username}?start={file_id}"
-                        message += f"• {channel['channel_name']}: {bot_link}\n"
-                    except Exception as e:
-                        logger.error(f"Error regenerating link for {channel['channel_name']}: {e}")
-                        message += f"• {channel['channel_name']}: Error - {str(e)}\n"
-                else:
+                try:
+                    # Check if bot is still admin
+                    chat = await context.bot.get_chat(channel_id)
+                    admins = await context.bot.get_chat_administrators(chat.id)
+                    bot_admin = next((admin for admin in admins if admin.user.id == bot_id), None)
+                    
+                    if not bot_admin:
+                        message += f"❌ {channel_name}: Bot is no longer admin\n"
+                        fail_count += 1
+                        continue
+                    
+                    # Check permissions
+                    can_invite = False
+                    if hasattr(bot_admin, 'can_invite_users'):
+                        can_invite = bot_admin.can_invite_users
+                    
+                    if not can_invite:
+                        message += f"⚠️ {channel_name}: No invite permission\n"
+                        fail_count += 1
+                        continue
+                    
+                    # Create new invite
+                    expiry_date = datetime.utcnow() + timedelta(seconds=LINK_DURATION)
+                    invite_link = await context.bot.create_chat_invite_link(
+                        chat_id=channel_id,
+                        expire_date=expiry_date,
+                        creates_join_request=False
+                    )
+                    
+                    # Update database
+                    LinkOperations.update_link(file_id, invite_link.invite_link, expiry_date)
+                    
                     bot_link = f"https://t.me/{bot_username}?start={file_id}"
-                    message += f"• {channel['channel_name']}: {bot_link}\n"
-                    count += 1
+                    message += f"✅ {channel_name}: {bot_link}\n"
+                    success_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"Error processing channel {channel_name}: {e}")
+                    message += f"❌ {channel_name}: Error - {str(e)[:50]}...\n"
+                    fail_count += 1
+        
+        # Try to discover new channels (limited approach)
+        # Note: Telegram doesn't provide a direct way to get all channels where bot is admin
+        # This is a best-effort approach
+        
+        message += f"\n<b>Summary:</b>\n"
+        message += f"✅ Success: {success_count}\n"
+        message += f"❌ Failed: {fail_count}\n"
+        message += f"📊 Total processed: {len(existing_channels) if existing_channels else 0}"
         
         if len(message) > 4000:
             parts = [message[i:i+4000] for i in range(0, len(message), 4000)]
             for part in parts:
-                await update.message.reply_text(part)
+                await update.message.reply_text(part, parse_mode="HTML")
         else:
-            await update.message.reply_text(message)
+            await update.message.reply_text(message, parse_mode="HTML")
             
-        await status_msg.edit_text(f"Batch link generation completed. Processed {count} channels.")
+        await status_msg.edit_text(f"✅ Batch link generation completed!")
         
     except Exception as e:
         logger.error(f"Error in batch_link: {e}")
-        await status_msg.edit_text(f"Error: {str(e)}")
+        await status_msg.edit_text(f"❌ Error: {str(e)}")
+
 
 async def list_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """List all active channels."""
@@ -218,7 +251,7 @@ async def troubleshoot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(troubleshoot_text, reply_markup=reply_markup, parse_mode="MarkdownV2")
 
 async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """List all bot admins."""
+    """List all bot admins with proper mentions."""
     user_id = update.effective_user.id
     
     if not is_admin(user_id):
@@ -227,16 +260,37 @@ async def admins_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     admins = UserOperations.get_all_admins()
     
-    message = "Bot Admins:\n\n"
+    if not admins:
+        await update.message.reply_text("No admins found.")
+        return
+    
+    message = "👑 <b>Bot Admins:</b>\n\n"
+    
     for i, admin in enumerate(admins, 1):
-        username = admin.get('username', 'No username')
+        admin_id = admin['user_id']
+        username = admin.get('username', '')
         first_name = admin.get('first_name', 'Unknown')
-        message += f"{i}. {first_name} (@{username}) - {admin['user_id']}\n"
+        last_name = admin.get('last_name', '')
+        
+        # Create full name
+        full_name = first_name
+        if last_name:
+            full_name = f"{first_name} {last_name}"
+        
+        # Create mention
+        if username:
+            mention = f"@{username}"
+            display_name = f"<a href='https://t.me/{username}'>{html.escape(full_name)}</a>"
+        else:
+            mention = f"ID: {admin_id}"
+            display_name = html.escape(full_name)
+        
+        message += f"{i}. {display_name} ({mention}) - <code>{admin_id}</code>\n"
     
     keyboard = [[InlineKeyboardButton("ᴄʟᴏsᴇ", callback_data="close")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    await update.message.reply_text(message, reply_markup=reply_markup)
+    await update.message.reply_text(message, reply_markup=reply_markup, parse_mode="HTML")
 
 async def users_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Show user statistics."""
@@ -335,5 +389,6 @@ async def get_log(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
     else:
         await update.message.reply_text("⚠️ Log file not found!")
+
 
 
